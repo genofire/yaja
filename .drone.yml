@@ -1,0 +1,15 @@
+workspace:
+  base: /go
+  path: src/dev.sum7.eu/genofire/yaja
+
+pipeline:
+  build:
+    image: golang:latest
+    commands:
+      - go get ./...
+      - go build
+  test:
+    image: golang:latest
+    commands:
+      - go get github.com/stretchr/testify/assert
+      - go test ./... -v -cover
