@@ -50,13 +50,13 @@ func (jid *JID) Full() string {
 	return jid.Bare()
 }
 
-//MarshalJSON to bytearray
-func (jid JID) MarshalJSON() ([]byte, error) {
+//MarshalTOML to bytearray
+func (jid JID) MarshalTOML() ([]byte, error) {
 	return []byte(jid.Full()), nil
 }
 
-// UnmarshalJSON from bytearray
-func (jid *JID) UnmarshalJSON(data []byte) (err error) {
+// UnmarshalTOML from bytearray
+func (jid *JID) UnmarshalTOML(data []byte) (err error) {
 	newJID := NewJID(string(data))
 	if newJID == nil {
 		return errors.New("not a valid jid")

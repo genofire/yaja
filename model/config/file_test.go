@@ -13,7 +13,7 @@ func TestReadConfig(t *testing.T) {
 	assert.NoError(err)
 	assert.NotNil(config)
 
-	assert.Equal("/tmp", config.TLSDir)
+	assert.Equal("/tmp/ssl", config.TLSDir)
 
 	config, err = ReadConfigFile("../config_example.co")
 	assert.Nil(config)

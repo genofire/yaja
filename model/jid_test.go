@@ -133,18 +133,18 @@ func TestJIDBare(t *testing.T) {
 	}
 }
 
-func TestJSONMarshal(t *testing.T) {
+func TestMarshal(t *testing.T) {
 	assert := assert.New(t)
 
 	jid := &JID{}
-	err := jid.UnmarshalJSON([]byte("juliet@example.com/foo"))
+	err := jid.UnmarshalTOML([]byte("juliet@example.com/foo"))
 
 	assert.NoError(err)
 	assert.Equal(jid.Local, "juliet")
 	assert.Equal(jid.Domain, "example.com")
 	assert.Equal(jid.Resource, "foo")
 
-	err = jid.UnmarshalJSON([]byte("juliet@example.com/ foo"))
+	err = jid.UnmarshalTOML([]byte("juliet@example.com/ foo"))
 
 	assert.Error(err)
 
@@ -153,7 +153,7 @@ func TestJSONMarshal(t *testing.T) {
 		Domain:   "example.com",
 		Resource: "bar",
 	}
-	jidString, err := jid.MarshalJSON()
+	jidString, err := jid.MarshalTOML()
 	assert.NoError(err)
 	assert.Equal("romeo@example.com/bar", string(jidString))
 }
