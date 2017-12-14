@@ -1,6 +1,6 @@
 workspace:
   base: /go
-  path: src/dev.sum7.eu/genofire/yaja
+  path: src/github.com/genofire/yaja
 
 pipeline:
   build:

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"crypto/tls"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,11 +10,12 @@ import (
 
 	"golang.org/x/crypto/acme/autocert"
 
-	"dev.sum7.eu/genofire/yaja/model"
-	"dev.sum7.eu/genofire/yaja/model/config"
+	"github.com/genofire/yaja/database"
+	"github.com/genofire/yaja/model/config"
 
-	"dev.sum7.eu/genofire/yaja/server"
+	"github.com/genofire/golang-lib/file"
 	"github.com/genofire/golang-lib/worker"
+	"github.com/genofire/yaja/server"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
@@ -22,32 +24,34 @@ import (
 var configPath string
 
 var (
-	configData      *config.Config
-	state           *model.State
+	configData      = &config.Config{}
+	db              = &database.State{}
 	statesaveWorker *worker.Worker
 	srv             *server.Server
 	certs           *tls.Config
 )
 
-// serveCmd represents the serve command
-var serveCmd = &cobra.Command{
-	Use:     "serve",
+// serverCmd represents the serve command
+var serverCmd = &cobra.Command{
+	Use:     "server",
 	Short:   "Runs the yaja server",
 	Example: "yaja serve -c /etc/yaja.conf",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		configData, err = config.ReadConfigFile(configPath)
+		err = file.ReadTOML(configPath, configData)
 		if err != nil {
 			log.Fatal("unable to load config file:", err)
 		}
 
-		state, err = model.ReadState(configData.StatePath)
+		log.SetLevel(log.DebugLevel)
+
+		err = file.ReadJSON(configData.StatePath, db)
 		if err != nil {
 			log.Warn("unable to load state file:", err)
 		}
 
 		statesaveWorker = worker.NewWorker(time.Minute, func() {
-			model.SaveJSON(state, configData.StatePath)
+			file.SaveJSON(configData.StatePath, db)
 			log.Info("save state to:", configData.StatePath)
 		})
 
@@ -56,13 +60,18 @@ var serveCmd = &cobra.Command{
 			Prompt: autocert.AcceptTOS,
 		}
 
-		certs = &tls.Config{GetCertificate: m.GetCertificate}
+		// https server to handle acme (by letsencrypt)
+		httpServer := &http.Server{
+			Addr:      ":https",
+			TLSConfig: &tls.Config{GetCertificate: m.GetCertificate},
+		}
+		go httpServer.ListenAndServeTLS("", "")
 
 		srv = &server.Server{
-			TLSConfig:  certs,
-			State:      state,
-			PortClient: configData.PortClient,
-			PortServer: configData.PortServer,
+			TLSManager: &m,
+			Database:   db,
+			ClientAddr: configData.Address.Client,
+			ServerAddr: configData.Address.Server,
 		}
 
 		go statesaveWorker.Start()
@@ -95,21 +104,24 @@ func quit() {
 	srv.Close()
 	statesaveWorker.Close()
 
-	model.SaveJSON(state, configData.StatePath)
+	file.SaveJSON(configData.StatePath, db)
 }
 
 func reload() {
 	log.Info("start reloading...")
-	configNewData, err := config.ReadConfigFile(configPath)
+	var configNewData *config.Config
+	err := file.ReadTOML(configPath, configNewData)
 	if err != nil {
 		log.Warn("unable to load config file:", err)
 		return
 	}
 
+	//TODO fetch changing address (to set restart)
+
 	if configNewData.StatePath != configData.StatePath {
 		statesaveWorker.Close()
 		statesaveWorker := worker.NewWorker(time.Minute, func() {
-			model.SaveJSON(state, configNewData.StatePath)
+			file.SaveJSON(configNewData.StatePath, db)
 			log.Info("save state to:", configNewData.StatePath)
 		})
 		go statesaveWorker.Start()
@@ -130,17 +142,11 @@ func reload() {
 
 	newServer := &server.Server{
 		TLSConfig:  certs,
-		State:      state,
-		PortClient: configNewData.PortClient,
-		PortServer: configNewData.PortServer,
+		Database:   db,
+		ClientAddr: configNewData.Address.Client,
+		ServerAddr: configNewData.Address.Server,
 	}
 
-	if configNewData.PortServer != configData.PortServer {
-		restartServer = true
-	}
-	if configNewData.PortClient != configData.PortClient {
-		restartServer = true
-	}
 	if restartServer {
 		go srv.Start()
 		//TODO should fetch new server error
@@ -153,6 +159,6 @@ func reload() {
 }
 
 func init() {
-	RootCmd.AddCommand(serveCmd)
-	serveCmd.Flags().StringVarP(&configPath, "config", "c", "yaja.conf", "Path to configuration file")
+	RootCmd.AddCommand(serverCmd)
+	serverCmd.Flags().StringVarP(&configPath, "config", "c", "yaja.conf", "Path to configuration file")
 }

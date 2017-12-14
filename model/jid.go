@@ -42,6 +42,8 @@ func (jid *JID) Bare() string {
 	return jid.Domain
 }
 
+func (jid *JID) String() string { return jid.Bare() }
+
 // Full get the "full" jid as string
 func (jid *JID) Full() string {
 	if jid.Resource != "" {

@@ -6,8 +6,8 @@ import (
 )
 
 type Domain struct {
-	FQDN     string
-	Accounts map[string]*Account
+	FQDN     string              `json:"-"`
+	Accounts map[string]*Account `json:"users"`
 	sync.Mutex
 }
 
@@ -29,8 +29,22 @@ func (d *Domain) UpdateAccount(a *Account) error {
 }
 
 type Account struct {
-	Local  string
-	Domain *Domain
+	Local    string  `json:"-"`
+	Domain   *Domain `json:"-"`
+	Password string  `json:"password"`
+}
+
+func NewAccount(jid *JID, password string) *Account {
+	if jid == nil {
+		return nil
+	}
+	return &Account{
+		Local: jid.Local,
+		Domain: &Domain{
+			FQDN: jid.Domain,
+		},
+		Password: password,
+	}
 }
 
 func (a *Account) GetJID() *JID {
@@ -38,4 +52,8 @@ func (a *Account) GetJID() *JID {
 		Domain: a.Domain.FQDN,
 		Local:  a.Local,
 	}
+}
+
+func (a *Account) ValidatePassword(password string) bool {
+	return a.Password == password
 }
