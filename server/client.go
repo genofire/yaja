@@ -25,7 +25,7 @@ type Client struct {
 
 func NewClient(conn net.Conn, srv *Server) *Client {
 	logger := log.New()
-	logger.SetLevel(log.DebugLevel)
+	logger.SetLevel(srv.LoggingClient)
 	client := &Client{
 		Conn:   conn,
 		Server: srv,
@@ -54,6 +54,20 @@ func (client *Client) Read() (*xml.StartElement, error) {
 			return &element, nil
 		}
 	}
+}
+
+func (client *Client) DomainRegisterAllowed() bool {
+	if client.jid.Domain == "" {
+		return false
+	}
+
+	for _, domain := range client.Server.RegisterDomains {
+		if domain == client.jid.Domain {
+
+			return !client.Server.RegisterEnable
+		}
+	}
+	return client.Server.RegisterEnable
 }
 
 func (client *Client) Close() {

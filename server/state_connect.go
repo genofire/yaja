@@ -150,13 +150,22 @@ func (state *TLSStream) Process(client *Client) (State, *Client) {
 		<stream:stream id='%x' version='1.0' xmlns='%s' xmlns:stream='%s'>`,
 		createCookie(), messages.NSClient, messages.NSStream)
 
-	fmt.Fprintf(client.Conn, `<stream:features>
+	if client.DomainRegisterAllowed() {
+		fmt.Fprintf(client.Conn, `<stream:features>
 			<mechanisms xmlns='%s'>
 				<mechanism>PLAIN</mechanism>
 			</mechanisms>
 			<register xmlns='%s'/>
 		</stream:features>`,
-		messages.NSSASL, messages.NSFeaturesIQRegister)
+			messages.NSSASL, messages.NSFeaturesIQRegister)
+	} else {
+		fmt.Fprintf(client.Conn, `<stream:features>
+			<mechanisms xmlns='%s'>
+				<mechanism>PLAIN</mechanism>
+			</mechanisms>
+		</stream:features>`,
+			messages.NSSASL)
+	}
 
 	return state.Next, client
 }

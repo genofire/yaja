@@ -43,7 +43,7 @@ var serverCmd = &cobra.Command{
 			log.Fatal("unable to load config file:", err)
 		}
 
-		log.SetLevel(log.DebugLevel)
+		log.SetLevel(configData.Logging.Level)
 
 		err = file.ReadJSON(configData.StatePath, db)
 		if err != nil {
@@ -61,17 +61,26 @@ var serverCmd = &cobra.Command{
 		}
 
 		// https server to handle acme (by letsencrypt)
-		httpServer := &http.Server{
-			Addr:      ":https",
-			TLSConfig: &tls.Config{GetCertificate: m.GetCertificate},
+		for _, addr := range configData.Address.Webserver {
+			hs := &http.Server{
+				Addr:      addr,
+				TLSConfig: &tls.Config{GetCertificate: m.GetCertificate},
+			}
+			go func(hs *http.Server, addr string) {
+				if err := hs.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
+					log.Errorf("webserver with addr %s: %s", addr, err)
+				}
+			}(hs, addr)
 		}
-		go httpServer.ListenAndServeTLS("", "")
 
 		srv = &server.Server{
-			TLSManager: &m,
-			Database:   db,
-			ClientAddr: configData.Address.Client,
-			ServerAddr: configData.Address.Server,
+			TLSManager:      &m,
+			Database:        db,
+			ClientAddr:      configData.Address.Client,
+			ServerAddr:      configData.Address.Server,
+			LoggingClient:   configData.Logging.LevelClient,
+			RegisterEnable:  configData.Register.Enable,
+			RegisterDomains: configData.Register.Domains,
 		}
 
 		go statesaveWorker.Start()
@@ -115,6 +124,10 @@ func reload() {
 		log.Warn("unable to load config file:", err)
 		return
 	}
+	log.SetLevel(configNewData.Logging.Level)
+	srv.LoggingClient = configNewData.Logging.LevelClient
+	srv.RegisterEnable = configNewData.Register.Enable
+	srv.RegisterDomains = configNewData.Register.Domains
 
 	//TODO fetch changing address (to set restart)
 
@@ -139,16 +152,18 @@ func reload() {
 		certs = &tls.Config{GetCertificate: m.GetCertificate}
 		restartServer = true
 	}
-
-	newServer := &server.Server{
-		TLSConfig:  certs,
-		Database:   db,
-		ClientAddr: configNewData.Address.Client,
-		ServerAddr: configNewData.Address.Server,
-	}
-
 	if restartServer {
-		go srv.Start()
+		newServer := &server.Server{
+			TLSConfig:       certs,
+			Database:        db,
+			ClientAddr:      configNewData.Address.Client,
+			ServerAddr:      configNewData.Address.Server,
+			LoggingClient:   configNewData.Logging.LevelClient,
+			RegisterEnable:  configNewData.Register.Enable,
+			RegisterDomains: configNewData.Register.Domains,
+		}
+		log.Warn("reloading need a restart:")
+		go newServer.Start()
 		//TODO should fetch new server error
 		srv.Close()
 		srv = newServer

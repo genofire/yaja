@@ -10,11 +10,14 @@ import (
 )
 
 type Server struct {
-	TLSConfig  *tls.Config
-	TLSManager *autocert.Manager
-	ClientAddr []string
-	ServerAddr []string
-	Database   *database.State
+	TLSConfig       *tls.Config
+	TLSManager      *autocert.Manager
+	ClientAddr      []string
+	ServerAddr      []string
+	Database        *database.State
+	LoggingClient   log.Level
+	RegisterEnable  bool     `toml:"enable"`
+	RegisterDomains []string `toml:"domains"`
 }
 
 func (srv *Server) Start() {

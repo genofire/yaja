@@ -19,6 +19,11 @@ func (state *RegisterFormRequest) Process(client *Client) (State, *Client) {
 	client.log.Debug("running")
 	defer client.log.Debug("leave")
 
+	if !client.DomainRegisterAllowed() {
+		client.log.Error("unpossible to reach this state, register on this domain is not allowed")
+		return nil, client
+	}
+
 	var msg messages.IQ
 	if err := client.in.DecodeElement(&msg, state.element); err != nil {
 		client.log.Warn("is no iq: ", err)
@@ -64,6 +69,11 @@ func (state *RegisterRequest) Process(client *Client) (State, *Client) {
 	client.log = client.log.WithField("state", "register request")
 	client.log.Debug("running")
 	defer client.log.Debug("leave")
+
+	if !client.DomainRegisterAllowed() {
+		client.log.Error("unpossible to reach this state, register on this domain is not allowed")
+		return nil, client
+	}
 
 	element, err := client.Read()
 	if err != nil {
