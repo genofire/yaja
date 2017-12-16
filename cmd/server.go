@@ -12,6 +12,7 @@ import (
 
 	"github.com/genofire/yaja/database"
 	"github.com/genofire/yaja/model/config"
+	"github.com/genofire/yaja/server/extension"
 
 	"github.com/genofire/golang-lib/file"
 	"github.com/genofire/golang-lib/worker"
@@ -29,6 +30,7 @@ var (
 	statesaveWorker *worker.Worker
 	srv             *server.Server
 	certs           *tls.Config
+	extensions      []extension.Extension
 )
 
 // serverCmd represents the serve command
@@ -81,6 +83,7 @@ var serverCmd = &cobra.Command{
 			LoggingClient:   configData.Logging.LevelClient,
 			RegisterEnable:  configData.Register.Enable,
 			RegisterDomains: configData.Register.Domains,
+			Extensions:      extensions,
 		}
 
 		go statesaveWorker.Start()
@@ -161,6 +164,7 @@ func reload() {
 			LoggingClient:   configNewData.Logging.LevelClient,
 			RegisterEnable:  configNewData.Register.Enable,
 			RegisterDomains: configNewData.Register.Domains,
+			Extensions:      extensions,
 		}
 		log.Warn("reloading need a restart:")
 		go newServer.Start()
@@ -176,4 +180,6 @@ func reload() {
 func init() {
 	RootCmd.AddCommand(serverCmd)
 	serverCmd.Flags().StringVarP(&configPath, "config", "c", "yaja.conf", "Path to configuration file")
+
+	extensions = append(extensions, &extension.Message{}, &extension.Roster{Database: db})
 }

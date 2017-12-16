@@ -5,6 +5,10 @@ import (
 	"net"
 
 	"github.com/genofire/yaja/database"
+	"github.com/genofire/yaja/model"
+	"github.com/genofire/yaja/server/extension"
+	"github.com/genofire/yaja/server/toclient"
+	"github.com/genofire/yaja/server/utils"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -16,8 +20,9 @@ type Server struct {
 	ServerAddr      []string
 	Database        *database.State
 	LoggingClient   log.Level
-	RegisterEnable  bool     `toml:"enable"`
-	RegisterDomains []string `toml:"domains"`
+	RegisterEnable  bool
+	RegisterDomains []string
+	Extensions      []extension.Extension
 }
 
 func (srv *Server) Start() {
@@ -68,19 +73,32 @@ func (srv *Server) handleServer(conn net.Conn) {
 
 func (srv *Server) handleClient(conn net.Conn) {
 	log.Info("new client connection:", conn.RemoteAddr())
-	client := NewClient(conn, srv)
-	state := ConnectionStartup()
+	client := utils.NewClient(conn, srv.LoggingClient)
+	state := toclient.ConnectionStartup(srv.Database, srv.TLSConfig, srv.TLSManager, srv.DomainRegisterAllowed)
 
 	for {
 		state, client = state.Process(client)
 		if state == nil {
-			client.log.Info("disconnect")
+			client.Log.Info("disconnect")
 			client.Close()
 			//s.DisconnectBus <- Disconnect{Jid: client.jid}
 			return
 		}
 		// run next state
 	}
+}
+
+func (srv *Server) DomainRegisterAllowed(jid *model.JID) bool {
+	if jid.Domain == "" {
+		return false
+	}
+
+	for _, domain := range srv.RegisterDomains {
+		if domain == jid.Domain {
+			return !srv.RegisterEnable
+		}
+	}
+	return srv.RegisterEnable
 }
 
 func (srv *Server) Close() {

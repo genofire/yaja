@@ -29,9 +29,10 @@ func (d *Domain) UpdateAccount(a *Account) error {
 }
 
 type Account struct {
-	Local    string  `json:"-"`
-	Domain   *Domain `json:"-"`
-	Password string  `json:"password"`
+	Local    string            `json:"-"`
+	Domain   *Domain           `json:"-"`
+	Password string            `json:"password"`
+	Roster   map[string]*Buddy `json:"roster"`
 }
 
 func NewAccount(jid *JID, password string) *Account {
