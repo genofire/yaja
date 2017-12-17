@@ -7,33 +7,28 @@ import (
 	"github.com/genofire/yaja/server/utils"
 )
 
-type IQPrivateRoster struct {
+type IQPrivateBookmark struct {
 	iqPrivateExtension
 }
 
-func (ex *IQPrivateRoster) Handle(msg *messages.IQ, q *iqPrivateQuery, client *utils.Client) bool {
+func (ex *IQPrivateBookmark) Handle(msg *messages.IQ, q *iqPrivateQuery, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "private").WithField("id", msg.ID)
 
-	// roster encode
-	type roster struct {
-		XMLName xml.Name `xml:"roster:delimiter roster"`
-		Body    []byte   `xml:",innerxml"`
+	// storage encode
+	type storage struct {
+		XMLName xml.Name `xml:"storage:bookmarks storage"`
 	}
-	r := &roster{}
-	err := xml.Unmarshal(q.Body, r)
+	s := &storage{}
+	err := xml.Unmarshal(q.Body, s)
 	if err != nil {
 		return false
 	}
+	/*
+		TODO full implement
+	*/
 
-	rosterByte, err := xml.Marshal(&roster{
-		Body: []byte("::"),
-	})
-	if err != nil {
-		log.Warn(err)
-		return true
-	}
 	queryByte, err := xml.Marshal(&iqPrivateQuery{
-		Body: rosterByte,
+		Body: q.Body,
 	})
 	if err != nil {
 		log.Warn(err)

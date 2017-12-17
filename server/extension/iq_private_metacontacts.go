@@ -7,11 +7,11 @@ import (
 	"github.com/genofire/yaja/server/utils"
 )
 
-type PrivateMetacontact struct {
-	ioPrivateExtension
+type IQPrivateMetacontact struct {
+	iqPrivateExtension
 }
 
-func (p *PrivateMetacontact) Handle(msg *messages.IQ, q *privateQuery, client *utils.Client) bool {
+func (ex *IQPrivateMetacontact) Handle(msg *messages.IQ, q *iqPrivateQuery, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "private-metacontact").WithField("id", msg.ID)
 
 	// storage encode
@@ -28,7 +28,7 @@ func (p *PrivateMetacontact) Handle(msg *messages.IQ, q *privateQuery, client *u
 		 https://xmpp.org/extensions/xep-0209.html
 	*/
 
-	queryByte, err := xml.Marshal(&privateQuery{
+	queryByte, err := xml.Marshal(&iqPrivateQuery{
 		Body: q.Body,
 	})
 	if err != nil {
@@ -37,13 +37,13 @@ func (p *PrivateMetacontact) Handle(msg *messages.IQ, q *privateQuery, client *u
 	}
 
 	// reply
-	client.Out.Encode(&messages.IQ{
+	client.Messages <- &messages.IQ{
 		Type: messages.IQTypeResult,
 		To:   client.JID.String(),
 		From: client.JID.Domain,
 		ID:   msg.ID,
 		Body: queryByte,
-	})
+	}
 
 	log.Debug("send")
 

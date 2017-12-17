@@ -3,25 +3,25 @@ package extension
 import (
 	"encoding/xml"
 
-	"github.com/genofire/yaja/database"
 	"github.com/genofire/yaja/messages"
 	"github.com/genofire/yaja/server/utils"
 )
 
-type IQRoster struct {
+//TODO Draft
+
+type IQLast struct {
 	IQExtension
-	Database *database.State
 }
 
-func (ex *IQRoster) Spaces() []string { return []string{"jabber:iq:roster"} }
+func (ex *IQLast) Spaces() []string { return []string{"jabber:iq:last"} }
 
-func (ex *IQRoster) Get(msg *messages.IQ, client *utils.Client) bool {
-	log := client.Log.WithField("extension", "roster").WithField("id", msg.ID)
+func (ex *IQLast) Get(msg *messages.IQ, client *utils.Client) bool {
+	log := client.Log.WithField("extension", "last").WithField("id", msg.ID)
 
 	// query encode
 	type query struct {
-		XMLName xml.Name `xml:"jabber:iq:roster query"`
-		Version string   `xml:"ver,attr"`
+		XMLName xml.Name `xml:"jabber:iq:last query"`
+		Seconds uint     `xml:"seconds,attr,omitempty"`
 		Body    []byte   `xml:",innerxml"`
 	}
 	q := &query{}
@@ -32,26 +32,12 @@ func (ex *IQRoster) Get(msg *messages.IQ, client *utils.Client) bool {
 
 	// answer query
 	q.Body = []byte{}
-	q.Version = "1"
 
 	// build answer body
 	type item struct {
 		XMLName xml.Name `xml:"item"`
 		JID     string   `xml:"jid,attr"`
 	}
-	if acc := ex.Database.GetAccount(client.JID); acc != nil {
-		for jid, _ := range acc.Roster {
-			itemByte, err := xml.Marshal(&item{
-				JID: jid,
-			})
-			if err != nil {
-				log.Warn(err)
-				continue
-			}
-			q.Body = append(q.Body, itemByte...)
-		}
-	}
-
 	// decode query
 	queryByte, err := xml.Marshal(q)
 	if err != nil {

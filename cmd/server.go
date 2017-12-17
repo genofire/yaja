@@ -180,12 +180,14 @@ func reload() {
 func init() {
 	extensions = append(extensions,
 		&extension.Message{},
+		&extension.Presence{},
 		extension.IQExtensions{
-			&extension.Private{},
-			&extension.Ping{},
-			&extension.Disco{Database: db},
-			&extension.Roster{Database: db},
-			&extension.ExtensionDiscovery{GetSpaces: func() []string {
+			&extension.IQPrivate{},
+			&extension.IQPing{},
+			&extension.IQLast{},
+			&extension.IQDisco{Database: db},
+			&extension.IQRoster{Database: db},
+			&extension.IQExtensionDiscovery{GetSpaces: func() []string {
 				return extensions.Spaces()
 			}},
 		})

@@ -26,11 +26,12 @@ func NewClient(conn net.Conn, level log.Level) *Client {
 	logger := log.New()
 	logger.SetLevel(level)
 	client := &Client{
-		Conn:  conn,
-		Log:   log.NewEntry(logger),
-		In:    xml.NewDecoder(conn),
-		Out:   xml.NewEncoder(conn),
-		close: make(chan interface{}),
+		Conn:     conn,
+		Log:      log.NewEntry(logger),
+		In:       xml.NewDecoder(conn),
+		Out:      xml.NewEncoder(conn),
+		Messages: make(chan interface{}, 1000),
+		close:    make(chan interface{}),
 	}
 	return client
 }

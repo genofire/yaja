@@ -7,13 +7,13 @@ import (
 	"github.com/genofire/yaja/server/utils"
 )
 
-type Ping struct {
+type IQPing struct {
 	IQExtension
 }
 
-func (p *Ping) Spaces() []string { return []string{"urn:xmpp:ping"} }
+func (ex *IQPing) Spaces() []string { return []string{"urn:xmpp:ping"} }
 
-func (p *Ping) Get(msg *messages.IQ, client *utils.Client) bool {
+func (ex *IQPing) Get(msg *messages.IQ, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "ping").WithField("id", msg.ID)
 
 	// ping encode
@@ -27,12 +27,12 @@ func (p *Ping) Get(msg *messages.IQ, client *utils.Client) bool {
 	}
 
 	// reply
-	client.Out.Encode(&messages.IQ{
+	client.Messages <- &messages.IQ{
 		Type: messages.IQTypeResult,
 		To:   client.JID.String(),
 		From: client.JID.Domain,
 		ID:   msg.ID,
-	})
+	}
 
 	log.Debug("send")
 

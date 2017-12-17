@@ -8,14 +8,14 @@ import (
 	"github.com/genofire/yaja/server/utils"
 )
 
-type Disco struct {
+type IQDisco struct {
 	IQExtension
 	Database *database.State
 }
 
-func (r *Disco) Spaces() []string { return []string{} }
+func (ex *IQDisco) Spaces() []string { return []string{"http://jabber.org/protocol/disco#items"} }
 
-func (r *Disco) Get(msg *messages.IQ, client *utils.Client) bool {
+func (ex *IQDisco) Get(msg *messages.IQ, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "disco-item").WithField("id", msg.ID)
 
 	// query encode
@@ -37,7 +37,7 @@ func (r *Disco) Get(msg *messages.IQ, client *utils.Client) bool {
 		XMLName xml.Name `xml:"item"`
 		JID     string   `xml:"jid,attr"`
 	}
-	if acc := r.Database.GetAccount(client.JID); acc != nil {
+	if acc := ex.Database.GetAccount(client.JID); acc != nil {
 		for jid, _ := range acc.Bookmarks {
 			itemByte, err := xml.Marshal(&item{
 				JID: jid,
@@ -58,13 +58,13 @@ func (r *Disco) Get(msg *messages.IQ, client *utils.Client) bool {
 	}
 
 	// reply
-	client.Out.Encode(&messages.IQ{
+	client.Messages <- &messages.IQ{
 		Type: messages.IQTypeResult,
 		To:   client.JID.String(),
 		From: client.JID.Domain,
 		ID:   msg.ID,
 		Body: queryByte,
-	})
+	}
 
 	log.Debug("send")
 

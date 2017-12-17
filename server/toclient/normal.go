@@ -20,7 +20,9 @@ func (state *SendingClient) Process(client *utils.Client) (state.State, *utils.C
 		select {
 		case msg := <-client.Messages:
 			err := client.Out.Encode(msg)
-			client.Log.Info(err)
+			if err != nil {
+				client.Log.Warn(err)
+			}
 		case <-client.OnClose():
 			return
 		}

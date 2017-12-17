@@ -7,14 +7,14 @@ import (
 	"github.com/genofire/yaja/server/utils"
 )
 
-type ExtensionDiscovery struct {
+type IQExtensionDiscovery struct {
 	IQExtension
 	GetSpaces func() []string
 }
 
-func (ex *ExtensionDiscovery) Spaces() []string { return []string{} }
+func (ex *IQExtensionDiscovery) Spaces() []string { return []string{} }
 
-func (ex *ExtensionDiscovery) Get(msg *messages.IQ, client *utils.Client) bool {
+func (ex *IQExtensionDiscovery) Get(msg *messages.IQ, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "roster").WithField("id", msg.ID)
 
 	// query encode
@@ -58,13 +58,13 @@ func (ex *ExtensionDiscovery) Get(msg *messages.IQ, client *utils.Client) bool {
 	}
 
 	// replay
-	client.Out.Encode(&messages.IQ{
+	client.Messages <- &messages.IQ{
 		Type: messages.IQTypeResult,
 		To:   client.JID.String(),
 		From: client.JID.Domain,
 		ID:   msg.ID,
 		Body: queryByte,
-	})
+	}
 
 	log.Debug("send")
 
