@@ -19,8 +19,7 @@ func (ex *IQPrivateMetacontact) Handle(msg *messages.IQ, q *iqPrivateQuery, clie
 		XMLName xml.Name `xml:"storage:metacontacts storage"`
 	}
 	s := &storage{}
-	err := xml.Unmarshal(q.Body, s)
-	if err != nil {
+	if err := xml.Unmarshal(q.Body, s); err != nil {
 		return false
 	}
 	/*

@@ -13,33 +13,34 @@ import (
 
 type RegisterFormRequest struct {
 	Next                  state.State
+	Client                *utils.Client
 	domainRegisterAllowed utils.DomainRegisterAllowed
 	element               *xml.StartElement
 }
 
 // Process message
-func (state *RegisterFormRequest) Process(client *utils.Client) (state.State, *utils.Client) {
-	client.Log = client.Log.WithField("state", "register form request")
-	client.Log.Debug("running")
-	defer client.Log.Debug("leave")
+func (state *RegisterFormRequest) Process() state.State {
+	state.Client.Log = state.Client.Log.WithField("state", "register form request")
+	state.Client.Log.Debug("running")
+	defer state.Client.Log.Debug("leave")
 
-	if !state.domainRegisterAllowed(client.JID) {
-		client.Log.Error("unpossible to reach this state, register on this domain is not allowed")
-		return nil, client
+	if !state.domainRegisterAllowed(state.Client.JID) {
+		state.Client.Log.Error("unpossible to reach this state, register on this domain is not allowed")
+		return nil
 	}
 
 	var msg messages.IQ
-	if err := client.In.DecodeElement(&msg, state.element); err != nil {
-		client.Log.Warn("is no iq: ", err)
-		return state, client
+	if err := state.Client.In.DecodeElement(&msg, state.element); err != nil {
+		state.Client.Log.Warn("is no iq: ", err)
+		return state
 	}
 	if msg.Type != messages.IQTypeGet {
-		client.Log.Warn("is no get iq")
-		return state, client
+		state.Client.Log.Warn("is no get iq")
+		return state
 	}
 	if msg.Error != nil {
-		client.Log.Warn("iq with error: ", msg.Error.Code)
-		return state, client
+		state.Client.Log.Warn("iq with error: ", msg.Error.Code)
+		return state
 	}
 	type query struct {
 		XMLName xml.Name `xml:"query"`
@@ -48,13 +49,13 @@ func (state *RegisterFormRequest) Process(client *utils.Client) (state.State, *u
 	err := xml.Unmarshal(msg.Body, q)
 
 	if q.XMLName.Space != messages.NSIQRegister || err != nil {
-		client.Log.Warn("is no iq register: ", err)
-		return nil, client
+		state.Client.Log.Warn("is no iq register: ", err)
+		return nil
 	}
-	client.Out.Encode(&messages.IQ{
+	state.Client.Out.Encode(&messages.IQ{
 		Type: messages.IQTypeResult,
-		To:   client.JID.String(),
-		From: client.JID.Domain,
+		To:   state.Client.JID.String(),
+		From: state.Client.JID.Domain,
 		ID:   msg.ID,
 		Body: []byte(fmt.Sprintf(`<query xmlns='%s'><instructions>
 					Choose a username and password for use with this service.
@@ -63,43 +64,44 @@ func (state *RegisterFormRequest) Process(client *utils.Client) (state.State, *u
 				<password/>
 			</query>`, messages.NSIQRegister)),
 	})
-	return state.Next, client
+	return state.Next
 }
 
 type RegisterRequest struct {
 	Next                  state.State
+	Client                *utils.Client
 	database              *database.State
 	domainRegisterAllowed utils.DomainRegisterAllowed
 }
 
 // Process message
-func (state *RegisterRequest) Process(client *utils.Client) (state.State, *utils.Client) {
-	client.Log = client.Log.WithField("state", "register request")
-	client.Log.Debug("running")
-	defer client.Log.Debug("leave")
+func (state *RegisterRequest) Process() state.State {
+	state.Client.Log = state.Client.Log.WithField("state", "register request")
+	state.Client.Log.Debug("running")
+	defer state.Client.Log.Debug("leave")
 
-	if !state.domainRegisterAllowed(client.JID) {
-		client.Log.Error("unpossible to reach this state, register on this domain is not allowed")
-		return nil, client
+	if !state.domainRegisterAllowed(state.Client.JID) {
+		state.Client.Log.Error("unpossible to reach this state, register on this domain is not allowed")
+		return nil
 	}
 
-	element, err := client.Read()
+	element, err := state.Client.Read()
 	if err != nil {
-		client.Log.Warn("unable to read: ", err)
-		return nil, client
+		state.Client.Log.Warn("unable to read: ", err)
+		return nil
 	}
 	var msg messages.IQ
-	if err = client.In.DecodeElement(&msg, element); err != nil {
-		client.Log.Warn("is no iq: ", err)
-		return state, client
+	if err = state.Client.In.DecodeElement(&msg, element); err != nil {
+		state.Client.Log.Warn("is no iq: ", err)
+		return state
 	}
 	if msg.Type != messages.IQTypeGet {
-		client.Log.Warn("is no get iq")
-		return state, client
+		state.Client.Log.Warn("is no get iq")
+		return state
 	}
 	if msg.Error != nil {
-		client.Log.Warn("iq with error: ", msg.Error.Code)
-		return state, client
+		state.Client.Log.Warn("iq with error: ", msg.Error.Code)
+		return state
 	}
 	type query struct {
 		XMLName  xml.Name `xml:"query"`
@@ -109,19 +111,19 @@ func (state *RegisterRequest) Process(client *utils.Client) (state.State, *utils
 	q := &query{}
 	err = xml.Unmarshal(msg.Body, q)
 	if err != nil {
-		client.Log.Warn("is no iq register: ", err)
-		return nil, client
+		state.Client.Log.Warn("is no iq register: ", err)
+		return nil
 	}
 
-	client.JID.Local = q.Username
-	client.Log = client.Log.WithField("jid", client.JID.Full())
-	account := model.NewAccount(client.JID, q.Password)
+	state.Client.JID.Local = q.Username
+	state.Client.Log = state.Client.Log.WithField("jid", state.Client.JID.Full())
+	account := model.NewAccount(state.Client.JID, q.Password)
 	err = state.database.AddAccount(account)
 	if err != nil {
-		client.Out.Encode(&messages.IQ{
+		state.Client.Out.Encode(&messages.IQ{
 			Type: messages.IQTypeResult,
-			To:   client.JID.String(),
-			From: client.JID.Domain,
+			To:   state.Client.JID.String(),
+			From: state.Client.JID.Domain,
 			ID:   msg.ID,
 			Body: []byte(fmt.Sprintf(`<query xmlns='%s'>
 					<username>%s</username>
@@ -136,16 +138,16 @@ func (state *RegisterRequest) Process(client *utils.Client) (state.State, *utils
 				},
 			},
 		})
-		client.Log.Warn("database error: ", err)
-		return state, client
+		state.Client.Log.Warn("database error: ", err)
+		return state
 	}
-	client.Out.Encode(&messages.IQ{
+	state.Client.Out.Encode(&messages.IQ{
 		Type: messages.IQTypeResult,
-		To:   client.JID.String(),
-		From: client.JID.Domain,
+		To:   state.Client.JID.String(),
+		From: state.Client.JID.Domain,
 		ID:   msg.ID,
 	})
 
-	client.Log.Infof("registered client %s", client.JID.Bare())
-	return state.Next, client
+	state.Client.Log.Infof("registered client %s", state.Client.JID.Bare())
+	return state.Next
 }

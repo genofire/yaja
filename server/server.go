@@ -8,21 +8,24 @@ import (
 	"github.com/genofire/yaja/model"
 	"github.com/genofire/yaja/server/extension"
 	"github.com/genofire/yaja/server/toclient"
+	"github.com/genofire/yaja/server/toserver"
 	"github.com/genofire/yaja/server/utils"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
 )
 
 type Server struct {
-	TLSConfig       *tls.Config
-	TLSManager      *autocert.Manager
-	ClientAddr      []string
-	ServerAddr      []string
-	Database        *database.State
-	LoggingClient   log.Level
-	RegisterEnable  bool
-	RegisterDomains []string
-	Extensions      extension.Extensions
+	TLSConfig        *tls.Config
+	TLSManager       *autocert.Manager
+	ClientAddr       []string
+	ServerAddr       []string
+	Database         *database.State
+	LoggingClient    log.Level
+	LoggingServer    log.Level
+	RegisterEnable   bool
+	RegisterDomains  []string
+	ExtensionsClient extension.Extensions
+	ExtensionsServer extension.Extensions
 }
 
 func (srv *Server) Start() {
@@ -69,15 +72,33 @@ func (srv *Server) listenClient(c2s net.Listener) {
 
 func (srv *Server) handleServer(conn net.Conn) {
 	log.Info("new server connection:", conn.RemoteAddr())
+
+	client := utils.NewClient(conn, srv.LoggingClient)
+	client.Log = client.Log.WithField("c", "s2s")
+
+	state := toserver.ConnectionStartup(srv.Database, srv.TLSConfig, srv.TLSManager, srv.ExtensionsServer, client)
+
+	for {
+		state = state.Process()
+		if state == nil {
+			client.Log.Info("disconnect")
+			client.Close()
+			return
+		}
+		// run next state
+	}
 }
 
 func (srv *Server) handleClient(conn net.Conn) {
 	log.Info("new client connection:", conn.RemoteAddr())
-	client := utils.NewClient(conn, srv.LoggingClient)
-	state := toclient.ConnectionStartup(srv.Database, srv.TLSConfig, srv.TLSManager, srv.DomainRegisterAllowed, srv.Extensions)
+
+	client := utils.NewClient(conn, srv.LoggingServer)
+	client.Log = client.Log.WithField("c", "c2s")
+
+	state := toclient.ConnectionStartup(srv.Database, srv.TLSConfig, srv.TLSManager, srv.DomainRegisterAllowed, srv.ExtensionsClient, client)
 
 	for {
-		state, client = state.Process(client)
+		state = state.Process()
 		if state == nil {
 			client.Log.Info("disconnect")
 			client.Close()

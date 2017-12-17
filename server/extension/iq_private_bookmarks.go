@@ -19,8 +19,7 @@ func (ex *IQPrivateBookmark) Handle(msg *messages.IQ, q *iqPrivateQuery, client 
 		XMLName xml.Name `xml:"storage:bookmarks storage"`
 	}
 	s := &storage{}
-	err := xml.Unmarshal(q.Body, s)
-	if err != nil {
+	if err := xml.Unmarshal(q.Body, s); err != nil {
 		return false
 	}
 	/*

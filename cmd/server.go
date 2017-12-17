@@ -25,12 +25,13 @@ import (
 var configPath string
 
 var (
-	configData      = &config.Config{}
-	db              = &database.State{}
-	statesaveWorker *worker.Worker
-	srv             *server.Server
-	certs           *tls.Config
-	extensions      extension.Extensions
+	configData       = &config.Config{}
+	db               = &database.State{}
+	statesaveWorker  *worker.Worker
+	srv              *server.Server
+	certs            *tls.Config
+	extensionsClient extension.Extensions
+	extensionsServer extension.Extensions
 )
 
 // serverCmd represents the serve command
@@ -39,16 +40,14 @@ var serverCmd = &cobra.Command{
 	Short:   "Runs the yaja server",
 	Example: "yaja serve -c /etc/yaja.conf",
 	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		err = file.ReadTOML(configPath, configData)
-		if err != nil {
+
+		if err := file.ReadTOML(configPath, configData); err != nil {
 			log.Fatal("unable to load config file:", err)
 		}
 
 		log.SetLevel(configData.Logging.Level)
 
-		err = file.ReadJSON(configData.StatePath, db)
-		if err != nil {
+		if err := file.ReadJSON(configData.StatePath, db); err != nil {
 			log.Warn("unable to load state file:", err)
 		}
 
@@ -76,14 +75,16 @@ var serverCmd = &cobra.Command{
 		}
 
 		srv = &server.Server{
-			TLSManager:      &m,
-			Database:        db,
-			ClientAddr:      configData.Address.Client,
-			ServerAddr:      configData.Address.Server,
-			LoggingClient:   configData.Logging.LevelClient,
-			RegisterEnable:  configData.Register.Enable,
-			RegisterDomains: configData.Register.Domains,
-			Extensions:      extensions,
+			TLSManager:       &m,
+			Database:         db,
+			ClientAddr:       configData.Address.Client,
+			ServerAddr:       configData.Address.Server,
+			LoggingClient:    configData.Logging.LevelClient,
+			LoggingServer:    configData.Logging.LevelServer,
+			RegisterEnable:   configData.Register.Enable,
+			RegisterDomains:  configData.Register.Domains,
+			ExtensionsServer: extensionsServer,
+			ExtensionsClient: extensionsClient,
 		}
 
 		go statesaveWorker.Start()
@@ -122,13 +123,14 @@ func quit() {
 func reload() {
 	log.Info("start reloading...")
 	var configNewData *config.Config
-	err := file.ReadTOML(configPath, configNewData)
-	if err != nil {
+
+	if err := file.ReadTOML(configPath, configNewData); err != nil {
 		log.Warn("unable to load config file:", err)
 		return
 	}
 	log.SetLevel(configNewData.Logging.Level)
 	srv.LoggingClient = configNewData.Logging.LevelClient
+	srv.LoggingServer = configNewData.Logging.LevelServer
 	srv.RegisterEnable = configNewData.Register.Enable
 	srv.RegisterDomains = configNewData.Register.Domains
 
@@ -157,14 +159,15 @@ func reload() {
 	}
 	if restartServer {
 		newServer := &server.Server{
-			TLSConfig:       certs,
-			Database:        db,
-			ClientAddr:      configNewData.Address.Client,
-			ServerAddr:      configNewData.Address.Server,
-			LoggingClient:   configNewData.Logging.LevelClient,
-			RegisterEnable:  configNewData.Register.Enable,
-			RegisterDomains: configNewData.Register.Domains,
-			Extensions:      extensions,
+			TLSConfig:        certs,
+			Database:         db,
+			ClientAddr:       configNewData.Address.Client,
+			ServerAddr:       configNewData.Address.Server,
+			LoggingClient:    configNewData.Logging.LevelClient,
+			RegisterEnable:   configNewData.Register.Enable,
+			RegisterDomains:  configNewData.Register.Domains,
+			ExtensionsServer: extensionsServer,
+			ExtensionsClient: extensionsClient,
 		}
 		log.Warn("reloading need a restart:")
 		go newServer.Start()
@@ -178,7 +181,7 @@ func reload() {
 }
 
 func init() {
-	extensions = append(extensions,
+	extensionsClient = append(extensionsClient,
 		&extension.Message{},
 		&extension.Presence{},
 		extension.IQExtensions{
@@ -188,8 +191,13 @@ func init() {
 			&extension.IQDisco{Database: db},
 			&extension.IQRoster{Database: db},
 			&extension.IQExtensionDiscovery{GetSpaces: func() []string {
-				return extensions.Spaces()
+				return extensionsClient.Spaces()
 			}},
+		})
+
+	extensionsServer = append(extensionsServer,
+		extension.IQExtensions{
+			&extension.IQPing{},
 		})
 
 	RootCmd.AddCommand(serverCmd)

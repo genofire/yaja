@@ -27,8 +27,7 @@ func (ex *IQPrivate) Get(msg *messages.IQ, client *utils.Client) bool {
 
 	// query encode
 	q := &iqPrivateQuery{}
-	err := xml.Unmarshal(msg.Body, q)
-	if err != nil {
+	if err := xml.Unmarshal(msg.Body, q); err != nil {
 		return false
 	}
 

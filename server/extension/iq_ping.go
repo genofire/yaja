@@ -21,8 +21,7 @@ func (ex *IQPing) Get(msg *messages.IQ, client *utils.Client) bool {
 		XMLName xml.Name `xml:"urn:xmpp:ping ping"`
 	}
 	pq := &ping{}
-	err := xml.Unmarshal(msg.Body, pq)
-	if err != nil {
+	if err := xml.Unmarshal(msg.Body, pq); err != nil {
 		return false
 	}
 

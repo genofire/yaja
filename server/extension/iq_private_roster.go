@@ -20,8 +20,7 @@ func (ex *IQPrivateRoster) Handle(msg *messages.IQ, q *iqPrivateQuery, client *u
 		Body    []byte   `xml:",innerxml"`
 	}
 	r := &roster{}
-	err := xml.Unmarshal(q.Body, r)
-	if err != nil {
+	if err := xml.Unmarshal(q.Body, r); err != nil {
 		return false
 	}
 

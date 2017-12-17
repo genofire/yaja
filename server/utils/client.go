@@ -30,7 +30,7 @@ func NewClient(conn net.Conn, level log.Level) *Client {
 		Log:      log.NewEntry(logger),
 		In:       xml.NewDecoder(conn),
 		Out:      xml.NewEncoder(conn),
-		Messages: make(chan interface{}, 1000),
+		Messages: make(chan interface{}),
 		close:    make(chan interface{}),
 	}
 	return client

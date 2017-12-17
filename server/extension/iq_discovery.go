@@ -23,8 +23,7 @@ func (ex *IQExtensionDiscovery) Get(msg *messages.IQ, client *utils.Client) bool
 		Body    []byte   `xml:",innerxml"`
 	}
 	q := &query{}
-	err := xml.Unmarshal(msg.Body, q)
-	if err != nil {
+	if err := xml.Unmarshal(msg.Body, q); err != nil {
 		return false
 	}
 

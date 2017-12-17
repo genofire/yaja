@@ -10,116 +10,107 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-// ConnectionStartup return steps through TCP TLS state
-func ConnectionStartup(after State, tlsconfig *tls.Config, tlsmgmt *autocert.Manager) State {
-	tlsupgrade := &TLSUpgrade{
-		Next:      after,
-		tlsconfig: tlsconfig,
-		tlsmgmt:   tlsmgmt,
-	}
-	stream := &Start{Next: tlsupgrade}
-	return stream
-}
-
 // Start state
 type Start struct {
-	Next State
+	Next   State
+	Client *utils.Client
 }
 
 // Process message
-func (state *Start) Process(client *utils.Client) (State, *utils.Client) {
-	client.Log = client.Log.WithField("state", "stream")
-	client.Log.Debug("running")
-	defer client.Log.Debug("leave")
+func (state *Start) Process() State {
+	state.Client.Log = state.Client.Log.WithField("state", "stream")
+	state.Client.Log.Debug("running")
+	defer state.Client.Log.Debug("leave")
 
-	element, err := client.Read()
+	element, err := state.Client.Read()
 	if err != nil {
-		client.Log.Warn("unable to read: ", err)
-		return nil, client
+		state.Client.Log.Warn("unable to read: ", err)
+		return nil
 	}
 	if element.Name.Space != messages.NSStream || element.Name.Local != "stream" {
-		client.Log.Warn("is no stream")
-		return state, client
+		state.Client.Log.Warn("is no stream")
+		return state
 	}
 	for _, attr := range element.Attr {
 		if attr.Name.Local == "to" {
-			client.JID = &model.JID{Domain: attr.Value}
-			client.Log = client.Log.WithField("jid", client.JID.Full())
+			state.Client.JID = &model.JID{Domain: attr.Value}
+			state.Client.Log = state.Client.Log.WithField("jid", state.Client.JID.Full())
 		}
 	}
-	if client.JID == nil {
-		client.Log.Warn("no 'to' domain readed")
-		return nil, client
+	if state.Client.JID == nil {
+		state.Client.Log.Warn("no 'to' domain readed")
+		return nil
 	}
 
-	fmt.Fprintf(client.Conn, `<?xml version='1.0'?>
+	fmt.Fprintf(state.Client.Conn, `<?xml version='1.0'?>
 		<stream:stream id='%x' version='1.0' xmlns='%s' xmlns:stream='%s'>`,
 		utils.CreateCookie(), messages.NSClient, messages.NSStream)
 
-	fmt.Fprintf(client.Conn, `<stream:features>
+	fmt.Fprintf(state.Client.Conn, `<stream:features>
 			<starttls xmlns='%s'>
 				<required/>
 			</starttls>
 		</stream:features>`,
 		messages.NSStream)
 
-	return state.Next, client
+	return state.Next
 }
 
 // TLSUpgrade state
 type TLSUpgrade struct {
-	Next      State
-	tlsconfig *tls.Config
-	tlsmgmt   *autocert.Manager
+	Next       State
+	Client     *utils.Client
+	TLSConfig  *tls.Config
+	TLSManager *autocert.Manager
 }
 
 // Process message
-func (state *TLSUpgrade) Process(client *utils.Client) (State, *utils.Client) {
-	client.Log = client.Log.WithField("state", "tls upgrade")
-	client.Log.Debug("running")
-	defer client.Log.Debug("leave")
+func (state *TLSUpgrade) Process() State {
+	state.Client.Log = state.Client.Log.WithField("state", "tls upgrade")
+	state.Client.Log.Debug("running")
+	defer state.Client.Log.Debug("leave")
 
-	element, err := client.Read()
+	element, err := state.Client.Read()
 	if err != nil {
-		client.Log.Warn("unable to read: ", err)
-		return nil, client
+		state.Client.Log.Warn("unable to read: ", err)
+		return nil
 	}
 	if element.Name.Space != messages.NSTLS || element.Name.Local != "starttls" {
-		client.Log.Warn("is no starttls")
-		return state, client
+		state.Client.Log.Warn("is no starttls", element)
+		return nil
 	}
-	fmt.Fprintf(client.Conn, "<proceed xmlns='%s'/>", messages.NSTLS)
+	fmt.Fprintf(state.Client.Conn, "<proceed xmlns='%s'/>", messages.NSTLS)
 	// perform the TLS handshake
 	var tlsConfig *tls.Config
-	if m := state.tlsmgmt; m != nil {
+	if m := state.TLSManager; m != nil {
 		var cert *tls.Certificate
-		cert, err = m.GetCertificate(&tls.ClientHelloInfo{ServerName: client.JID.Domain})
+		cert, err = m.GetCertificate(&tls.ClientHelloInfo{ServerName: state.Client.JID.Domain})
 		if err != nil {
-			client.Log.Warn("no cert in tls manger found: ", err)
-			return nil, client
+			state.Client.Log.Warn("no cert in tls manger found: ", err)
+			return nil
 		}
 		tlsConfig = &tls.Config{
 			Certificates: []tls.Certificate{*cert},
 		}
 	}
 	if tlsConfig == nil {
-		tlsConfig = state.tlsconfig
+		tlsConfig = state.TLSConfig
 		if tlsConfig != nil {
-			tlsConfig.ServerName = client.JID.Domain
+			tlsConfig.ServerName = state.Client.JID.Domain
 		} else {
-			client.Log.Warn("no tls config found: ", err)
-			return nil, client
+			state.Client.Log.Warn("no tls config found: ", err)
+			return nil
 		}
 	}
 
-	tlsConn := tls.Server(client.Conn, tlsConfig)
+	tlsConn := tls.Server(state.Client.Conn, tlsConfig)
 	err = tlsConn.Handshake()
 	if err != nil {
-		client.Log.Warn("unable to tls handshake: ", err)
-		return nil, client
+		state.Client.Log.Warn("unable to tls handshake: ", err)
+		return nil
 	}
 	// restart the Connection
-	client.SetConnecting(tlsConn)
+	state.Client.SetConnecting(tlsConn)
 
-	return state.Next, client
+	return state.Next
 }

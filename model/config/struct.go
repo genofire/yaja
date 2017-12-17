@@ -10,6 +10,7 @@ type Config struct {
 	Logging   struct {
 		Level       log.Level `toml:"level"`
 		LevelClient log.Level `toml:"level_client"`
+		LevelServer log.Level `toml:"level_server"`
 	} `toml:"logging"`
 	Register struct {
 		Enable  bool     `toml:"enable"`
