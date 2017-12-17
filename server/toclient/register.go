@@ -53,6 +53,8 @@ func (state *RegisterFormRequest) Process(client *utils.Client) (state.State, *u
 	}
 	client.Out.Encode(&messages.IQ{
 		Type: messages.IQTypeResult,
+		To:   client.JID.String(),
+		From: client.JID.Domain,
 		ID:   msg.ID,
 		Body: []byte(fmt.Sprintf(`<query xmlns='%s'><instructions>
 					Choose a username and password for use with this service.
@@ -118,6 +120,8 @@ func (state *RegisterRequest) Process(client *utils.Client) (state.State, *utils
 	if err != nil {
 		client.Out.Encode(&messages.IQ{
 			Type: messages.IQTypeResult,
+			To:   client.JID.String(),
+			From: client.JID.Domain,
 			ID:   msg.ID,
 			Body: []byte(fmt.Sprintf(`<query xmlns='%s'>
 					<username>%s</username>
@@ -137,6 +141,8 @@ func (state *RegisterRequest) Process(client *utils.Client) (state.State, *utils
 	}
 	client.Out.Encode(&messages.IQ{
 		Type: messages.IQTypeResult,
+		To:   client.JID.String(),
+		From: client.JID.Domain,
 		ID:   msg.ID,
 	})
 

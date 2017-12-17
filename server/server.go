@@ -22,7 +22,7 @@ type Server struct {
 	LoggingClient   log.Level
 	RegisterEnable  bool
 	RegisterDomains []string
-	Extensions      []extension.Extension
+	Extensions      extension.Extensions
 }
 
 func (srv *Server) Start() {
@@ -74,7 +74,7 @@ func (srv *Server) handleServer(conn net.Conn) {
 func (srv *Server) handleClient(conn net.Conn) {
 	log.Info("new client connection:", conn.RemoteAddr())
 	client := utils.NewClient(conn, srv.LoggingClient)
-	state := toclient.ConnectionStartup(srv.Database, srv.TLSConfig, srv.TLSManager, srv.DomainRegisterAllowed)
+	state := toclient.ConnectionStartup(srv.Database, srv.TLSConfig, srv.TLSManager, srv.DomainRegisterAllowed, srv.Extensions)
 
 	for {
 		state, client = state.Process(client)

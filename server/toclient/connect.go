@@ -16,8 +16,8 @@ import (
 )
 
 // ConnectionStartup return steps through TCP TLS state
-func ConnectionStartup(db *database.State, tlsconfig *tls.Config, tlsmgmt *autocert.Manager, registerAllowed utils.DomainRegisterAllowed) state.State {
-	receiving := &ReceivingClient{}
+func ConnectionStartup(db *database.State, tlsconfig *tls.Config, tlsmgmt *autocert.Manager, registerAllowed utils.DomainRegisterAllowed, extensions []extension.Extension) state.State {
+	receiving := &ReceivingClient{Extensions: extensions}
 	sending := &SendingClient{Next: receiving}
 	authedstream := &AuthedStream{Next: sending}
 	authedstart := &AuthedStart{Next: authedstream}
@@ -213,6 +213,8 @@ func (state *AuthedStream) Process(client *utils.Client) (state.State, *utils.Cl
 	client.Log = client.Log.WithField("jid", client.JID.Full())
 	client.Out.Encode(&messages.IQ{
 		Type: messages.IQTypeResult,
+		To:   client.JID.String(),
+		From: client.JID.Domain,
 		ID:   msg.ID,
 		Body: []byte(fmt.Sprintf(
 			`<bind xmlns='%s'>
@@ -222,51 +224,4 @@ func (state *AuthedStream) Process(client *utils.Client) (state.State, *utils.Cl
 	})
 
 	return state.Next, client
-}
-
-// SendingClient state
-type SendingClient struct {
-	Next state.State
-}
-
-// Process messages
-func (state *SendingClient) Process(client *utils.Client) (state.State, *utils.Client) {
-	client.Log = client.Log.WithField("state", "normal")
-	client.Log.Debug("sending")
-	// sending
-	go func() {
-		select {
-		case msg := <-client.Messages:
-			err := client.Out.Encode(msg)
-			client.Log.Info(err)
-		case <-client.OnClose():
-			return
-		}
-	}()
-	client.Log.Debug("receiving")
-	return state.Next, client
-}
-
-// ReceivingClient state
-type ReceivingClient struct {
-	Extensions []extension.Extension
-}
-
-// Process messages
-func (state *ReceivingClient) Process(client *utils.Client) (state.State, *utils.Client) {
-	element, err := client.Read()
-	if err != nil {
-		client.Log.Warn("unable to read: ", err)
-		return nil, client
-	}
-	count := 0
-	for _, extension := range state.Extensions {
-		if extension.Process(element, client) {
-			count++
-		}
-	}
-	if count != 1 {
-		client.Log.WithField("extension", count).Debug(element)
-	}
-	return state, client
 }

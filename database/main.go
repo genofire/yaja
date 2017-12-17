@@ -66,3 +66,18 @@ func (s *State) Authenticate(jid *model.JID, password string) (bool, error) {
 	}
 	return false, nil
 }
+
+func (s *State) GetAccount(jid *model.JID) *model.Account {
+	logger := log.WithField("database", "get")
+
+	if domain, ok := s.Domains[jid.Domain]; ok {
+		if acc, ok := domain.Accounts[jid.Local]; ok {
+			return acc
+		} else {
+			logger.Debug("account not found")
+		}
+	} else {
+		logger.Debug("domain not found")
+	}
+	return nil
+}

@@ -30,7 +30,7 @@ var (
 	statesaveWorker *worker.Worker
 	srv             *server.Server
 	certs           *tls.Config
-	extensions      []extension.Extension
+	extensions      extension.Extensions
 )
 
 // serverCmd represents the serve command
@@ -178,8 +178,19 @@ func reload() {
 }
 
 func init() {
+	extensions = append(extensions,
+		&extension.Message{},
+		extension.IQExtensions{
+			&extension.Private{},
+			&extension.Ping{},
+			&extension.Disco{Database: db},
+			&extension.Roster{Database: db},
+			&extension.ExtensionDiscovery{GetSpaces: func() []string {
+				return extensions.Spaces()
+			}},
+		})
+
 	RootCmd.AddCommand(serverCmd)
 	serverCmd.Flags().StringVarP(&configPath, "config", "c", "yaja.conf", "Path to configuration file")
 
-	extensions = append(extensions, &extension.Message{}, &extension.Roster{Database: db})
 }

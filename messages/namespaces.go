@@ -16,4 +16,6 @@ const (
 	NSIQRegister = "jabber:iq:register"
 
 	NSFeaturesIQRegister = "http://jabber.org/features/iq-register"
+
+	NSDisco = "http://jabber.org/protocol/disco#info"
 )

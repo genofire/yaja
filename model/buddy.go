@@ -15,3 +15,6 @@ type Buddy struct {
 	Subscription int      `json:"subscription"`
 	Ask          int      `json:"ask"`
 }
+
+type Bookmark struct {
+}
