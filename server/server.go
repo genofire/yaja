@@ -4,12 +4,12 @@ import (
 	"crypto/tls"
 	"net"
 
-	"github.com/genofire/yaja/database"
-	"github.com/genofire/yaja/model"
-	"github.com/genofire/yaja/server/extension"
-	"github.com/genofire/yaja/server/toclient"
-	"github.com/genofire/yaja/server/toserver"
-	"github.com/genofire/yaja/server/utils"
+	"dev.sum7.eu/genofire/yaja/database"
+	"dev.sum7.eu/genofire/yaja/model"
+	"dev.sum7.eu/genofire/yaja/server/extension"
+	"dev.sum7.eu/genofire/yaja/server/toclient"
+	"dev.sum7.eu/genofire/yaja/server/toserver"
+	"dev.sum7.eu/genofire/yaja/server/utils"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
 )

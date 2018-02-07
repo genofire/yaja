@@ -3,9 +3,9 @@ package extension
 import (
 	"encoding/xml"
 
-	"github.com/genofire/yaja/database"
-	"github.com/genofire/yaja/messages"
-	"github.com/genofire/yaja/server/utils"
+	"dev.sum7.eu/genofire/yaja/database"
+	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/server/utils"
 )
 
 type IQDisco struct {

@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"net"
 
-	"github.com/genofire/yaja/model"
+	"dev.sum7.eu/genofire/yaja/model"
 	log "github.com/sirupsen/logrus"
 )
 

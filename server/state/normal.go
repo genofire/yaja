@@ -1,8 +1,8 @@
 package state
 
 import (
-	"github.com/genofire/yaja/server/extension"
-	"github.com/genofire/yaja/server/utils"
+	"dev.sum7.eu/genofire/yaja/server/extension"
+	"dev.sum7.eu/genofire/yaja/server/utils"
 )
 
 // SendingClient state

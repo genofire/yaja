@@ -4,11 +4,11 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	"github.com/genofire/yaja/database"
-	"github.com/genofire/yaja/messages"
-	"github.com/genofire/yaja/model"
-	"github.com/genofire/yaja/server/state"
-	"github.com/genofire/yaja/server/utils"
+	"dev.sum7.eu/genofire/yaja/database"
+	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/model"
+	"dev.sum7.eu/genofire/yaja/server/state"
+	"dev.sum7.eu/genofire/yaja/server/utils"
 )
 
 type RegisterFormRequest struct {

@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/genofire/yaja/database"
-	"github.com/genofire/yaja/messages"
-	"github.com/genofire/yaja/server/extension"
-	"github.com/genofire/yaja/server/state"
-	"github.com/genofire/yaja/server/utils"
+	"dev.sum7.eu/genofire/yaja/database"
+	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/server/extension"
+	"dev.sum7.eu/genofire/yaja/server/state"
+	"dev.sum7.eu/genofire/yaja/server/utils"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -64,24 +64,26 @@ func (state *TLSStream) Process() state.State {
 		return state
 	}
 
-	fmt.Fprintf(state.Client.Conn, `<?xml version='1.0'?>
-		<stream:stream id='%x' version='1.0' xmlns='%s' xmlns:stream='%s'>`,
-		utils.CreateCookie(), messages.NSClient, messages.NSStream)
-
 	if state.domainRegisterAllowed(state.Client.JID) {
-		fmt.Fprintf(state.Client.Conn, `<stream:features>
-			<mechanisms xmlns='%s'>
-				<mechanism>PLAIN</mechanism>
-			</mechanisms>
-			<register xmlns='%s'/>
-		</stream:features>`,
+		fmt.Fprintf(state.Client.Conn, `<?xml version='1.0'?>
+			<stream:stream id='%x' version='1.0' xmlns='%s' xmlns:stream='%s'>
+			<stream:features>
+				<register xmlns='%s'/>
+				<mechanisms xmlns='%s'>
+					<mechanism>PLAIN</mechanism>
+				</mechanisms>
+			</stream:features>`,
+			utils.CreateCookie(), messages.NSClient, messages.NSStream,
 			messages.NSSASL, messages.NSFeaturesIQRegister)
 	} else {
-		fmt.Fprintf(state.Client.Conn, `<stream:features>
-			<mechanisms xmlns='%s'>
-				<mechanism>PLAIN</mechanism>
-			</mechanisms>
-		</stream:features>`,
+		fmt.Fprintf(state.Client.Conn, `<?xml version='1.0'?>
+			<stream:stream id='%x' version='1.0' xmlns='%s' xmlns:stream='%s'>
+			<stream:features>
+				<mechanisms xmlns='%s'>
+					<mechanism>PLAIN</mechanism>
+				</mechanisms>
+			</stream:features>`,
+			utils.CreateCookie(), messages.NSClient, messages.NSStream,
 			messages.NSSASL)
 	}
 
@@ -166,12 +168,13 @@ func (state *AuthedStart) Process() state.State {
 		return nil
 	}
 	fmt.Fprintf(state.Client.Conn, `<?xml version='1.0'?>
-		<stream:stream id='%x' version='1.0' xmlns='%s' xmlns:stream='%s'>`,
-		utils.CreateCookie(), messages.NSClient, messages.NSStream)
-
-	fmt.Fprintf(state.Client.Conn, `<stream:features>
-			<bind xmlns='%s'/>
-		</stream:features>`,
+		<stream:stream xmlns:stream='%s' xml:lang='en' from='%s' id='%x' version='1.0' xmlns='%s'>
+		<stream:features>
+				<bind xmlns='%s'>
+					<required/>
+				</bind>
+			</stream:features>`,
+		messages.NSStream, state.Client.JID.Domain, utils.CreateCookie(), messages.NSClient,
 		messages.NSBind)
 
 	return state.Next

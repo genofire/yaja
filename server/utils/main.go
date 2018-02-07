@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/genofire/yaja/model"
+	"dev.sum7.eu/genofire/yaja/model"
 )
 
 // Cookie is used to give a unique identifier to each request.

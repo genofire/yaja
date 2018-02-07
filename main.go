@@ -1,6 +1,6 @@
 package main
 
-import "github.com/genofire/yaja/cmd"
+import "dev.sum7.eu/genofire/yaja/cmd"
 
 func main() {
 	cmd.Execute()

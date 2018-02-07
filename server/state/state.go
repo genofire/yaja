@@ -1,6 +1,6 @@
 package state
 
-import "github.com/genofire/yaja/server/utils"
+import "dev.sum7.eu/genofire/yaja/server/utils"
 
 // State processes the stream and moves to the next state
 type State interface {

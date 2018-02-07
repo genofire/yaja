@@ -4,9 +4,9 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"github.com/genofire/yaja/messages"
-	"github.com/genofire/yaja/model"
-	"github.com/genofire/yaja/server/utils"
+	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/model"
+	"dev.sum7.eu/genofire/yaja/server/utils"
 	"golang.org/x/crypto/acme/autocert"
 )
 

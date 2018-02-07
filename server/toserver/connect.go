@@ -6,11 +6,11 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	"github.com/genofire/yaja/database"
-	"github.com/genofire/yaja/messages"
-	"github.com/genofire/yaja/server/extension"
-	"github.com/genofire/yaja/server/state"
-	"github.com/genofire/yaja/server/utils"
+	"dev.sum7.eu/genofire/yaja/database"
+	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/server/extension"
+	"dev.sum7.eu/genofire/yaja/server/state"
+	"dev.sum7.eu/genofire/yaja/server/utils"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -90,14 +90,14 @@ func (state *TLSStream) Process() state.State {
 	}
 
 	fmt.Fprintf(state.Client.Conn, `<?xml version='1.0'?>
-		<stream:stream id='%x' version='1.0' xmlns='%s' xmlns:stream='%s'>`,
-		utils.CreateCookie(), messages.NSClient, messages.NSStream)
-
-	fmt.Fprintf(state.Client.Conn, `<stream:features>
+		<stream:stream id='%x' version='1.0' xmlns='%s' xmlns:stream='%s'>
+		<stream:features>
 			<mechanisms xmlns='%s'>
 				<mechanism>EXTERNAL</mechanism>
 			</mechanisms>
+			<bidi xmlns='urn:xmpp:features:bidi'/>
 		</stream:features>`,
+		utils.CreateCookie(), messages.NSClient, messages.NSStream,
 		messages.NSSASL)
 
 	return state.Next

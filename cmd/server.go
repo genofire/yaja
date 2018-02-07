@@ -10,13 +10,13 @@ import (
 
 	"golang.org/x/crypto/acme/autocert"
 
-	"github.com/genofire/yaja/database"
-	"github.com/genofire/yaja/model/config"
-	"github.com/genofire/yaja/server/extension"
+	"dev.sum7.eu/genofire/yaja/database"
+	"dev.sum7.eu/genofire/yaja/model/config"
+	"dev.sum7.eu/genofire/yaja/server/extension"
 
-	"github.com/genofire/golang-lib/file"
-	"github.com/genofire/golang-lib/worker"
-	"github.com/genofire/yaja/server"
+	"dev.sum7.eu/genofire/golang-lib/file"
+	"dev.sum7.eu/genofire/golang-lib/worker"
+	"dev.sum7.eu/genofire/yaja/server"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
