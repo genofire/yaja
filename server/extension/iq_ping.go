@@ -13,7 +13,7 @@ type IQPing struct {
 
 func (ex *IQPing) Spaces() []string { return []string{"urn:xmpp:ping"} }
 
-func (ex *IQPing) Get(msg *messages.IQ, client *utils.Client) bool {
+func (ex *IQPing) Get(msg *messages.IQClient, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "ping").WithField("id", msg.ID)
 
 	// ping encode
@@ -26,7 +26,7 @@ func (ex *IQPing) Get(msg *messages.IQ, client *utils.Client) bool {
 	}
 
 	// reply
-	client.Messages <- &messages.IQ{
+	client.Messages <- &messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   client.JID.String(),
 		From: client.JID.Domain,

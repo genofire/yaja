@@ -12,14 +12,14 @@ const (
 )
 
 // IQ element - info/query
-type IQ struct {
-	XMLName xml.Name `xml:"jabber:client iq"`
-	From    string   `xml:"from,attr"`
-	ID      string   `xml:"id,attr"`
-	To      string   `xml:"to,attr"`
-	Type    IQType   `xml:"type,attr"`
-	Error   *Error   `xml:"error"`
-	//Bind    bindBind    `xml:"bind"`
-	Body []byte `xml:",innerxml"`
+type IQClient struct {
+	XMLName xml.Name     `xml:"jabber:client iq"`
+	From    string       `xml:"from,attr"`
+	ID      string       `xml:"id,attr"`
+	To      string       `xml:"to,attr"`
+	Type    IQType       `xml:"type,attr"`
+	Error   *ErrorClient `xml:"error"`
+	Bind    Bind         `xml:"bind"`
+	Body    []byte       `xml:",innerxml"`
 	// RosterRequest - better detection of iq's
 }

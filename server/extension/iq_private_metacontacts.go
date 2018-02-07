@@ -11,7 +11,7 @@ type IQPrivateMetacontact struct {
 	iqPrivateExtension
 }
 
-func (ex *IQPrivateMetacontact) Handle(msg *messages.IQ, q *iqPrivateQuery, client *utils.Client) bool {
+func (ex *IQPrivateMetacontact) Handle(msg *messages.IQClient, q *iqPrivateQuery, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "private-metacontact").WithField("id", msg.ID)
 
 	// storage encode
@@ -36,7 +36,7 @@ func (ex *IQPrivateMetacontact) Handle(msg *messages.IQ, q *iqPrivateQuery, clie
 	}
 
 	// reply
-	client.Messages <- &messages.IQ{
+	client.Messages <- &messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   client.JID.String(),
 		From: client.JID.Domain,

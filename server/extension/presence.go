@@ -19,11 +19,11 @@ func (p *Presence) Process(element *xml.StartElement, client *utils.Client) bool
 	log := client.Log.WithField("extension", "presence")
 
 	// iq encode
-	var msg messages.Presence
+	var msg messages.PresenceClient
 	if err := client.In.DecodeElement(&msg, element); err != nil {
 		return false
 	}
-	client.Messages <- &messages.Presence{
+	client.Messages <- &messages.PresenceClient{
 		ID: msg.ID,
 	}
 	log.Debug("send")

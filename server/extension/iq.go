@@ -11,8 +11,8 @@ type IQExtensions []IQExtension
 
 type IQExtension interface {
 	Extension
-	Get(*messages.IQ, *utils.Client) bool
-	Set(*messages.IQ, *utils.Client) bool
+	Get(*messages.IQClient, *utils.Client) bool
+	Set(*messages.IQClient, *utils.Client) bool
 }
 
 func (iex IQExtensions) Spaces() (result []string) {
@@ -27,7 +27,7 @@ func (iex IQExtensions) Process(element *xml.StartElement, client *utils.Client)
 	log := client.Log.WithField("extension", "iq")
 
 	// iq encode
-	var msg messages.IQ
+	var msg messages.IQClient
 	if err := client.In.DecodeElement(&msg, element); err != nil {
 		return false
 	}

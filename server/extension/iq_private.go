@@ -17,12 +17,12 @@ type iqPrivateQuery struct {
 }
 
 type iqPrivateExtension interface {
-	Handle(*messages.IQ, *iqPrivateQuery, *utils.Client) bool
+	Handle(*messages.IQClient, *iqPrivateQuery, *utils.Client) bool
 }
 
 func (ex *IQPrivate) Spaces() []string { return []string{"jabber:iq:private"} }
 
-func (ex *IQPrivate) Get(msg *messages.IQ, client *utils.Client) bool {
+func (ex *IQPrivate) Get(msg *messages.IQClient, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "private").WithField("id", msg.ID)
 
 	// query encode

@@ -14,7 +14,7 @@ type IQExtensionDiscovery struct {
 
 func (ex *IQExtensionDiscovery) Spaces() []string { return []string{} }
 
-func (ex *IQExtensionDiscovery) Get(msg *messages.IQ, client *utils.Client) bool {
+func (ex *IQExtensionDiscovery) Get(msg *messages.IQClient, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "roster").WithField("id", msg.ID)
 
 	// query encode
@@ -57,7 +57,7 @@ func (ex *IQExtensionDiscovery) Get(msg *messages.IQ, client *utils.Client) bool
 	}
 
 	// replay
-	client.Messages <- &messages.IQ{
+	client.Messages <- &messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   client.JID.String(),
 		From: client.JID.Domain,

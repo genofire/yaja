@@ -15,7 +15,7 @@ type IQDisco struct {
 
 func (ex *IQDisco) Spaces() []string { return []string{"http://jabber.org/protocol/disco#items"} }
 
-func (ex *IQDisco) Get(msg *messages.IQ, client *utils.Client) bool {
+func (ex *IQDisco) Get(msg *messages.IQClient, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "disco-item").WithField("id", msg.ID)
 
 	// query encode
@@ -57,7 +57,7 @@ func (ex *IQDisco) Get(msg *messages.IQ, client *utils.Client) bool {
 	}
 
 	// reply
-	client.Messages <- &messages.IQ{
+	client.Messages <- &messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   client.JID.String(),
 		From: client.JID.Domain,

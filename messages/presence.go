@@ -14,8 +14,8 @@ const (
 	PresenceTypeError        PresenceType = "error"
 )
 
-// Presence element
-type Presence struct {
+// PresenceClient element
+type PresenceClient struct {
 	XMLName xml.Name `xml:"jabber:client presence"`
 	From    string   `xml:"from,attr,omitempty"`
 	ID      string   `xml:"id,attr,omitempty"`
@@ -27,6 +27,19 @@ type Presence struct {
 	Status   string `xml:"status,omitempty"` // sb []clientText
 	Priority string `xml:"priority,omitempty"`
 	// Caps     *ClientCaps  `xml:"c"`
-	Error *Error `xml:"error"`
+	Error *ErrorClient `xml:"error"`
 	// Delay    Delay        `xml:"delay"`
+}
+
+// MessageClient element
+type MessageClient struct {
+	XMLName xml.Name `xml:"jabber:client message"`
+	From    string   `xml:"from,attr,omitempty"`
+	ID      string   `xml:"id,attr,omitempty"`
+	To      string   `xml:"to,attr,omitempty"`
+	Type    string   `xml:"type,attr,omitempty"`
+	Lang    string   `xml:"lang,attr,omitempty"`
+	Subject string   `xml:"subject"`
+	Body    string   `xml:"body"`
+	Thread  string   `xml:"thread"`
 }

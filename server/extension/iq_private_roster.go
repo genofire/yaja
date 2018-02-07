@@ -11,7 +11,7 @@ type IQPrivateRoster struct {
 	iqPrivateExtension
 }
 
-func (ex *IQPrivateRoster) Handle(msg *messages.IQ, q *iqPrivateQuery, client *utils.Client) bool {
+func (ex *IQPrivateRoster) Handle(msg *messages.IQClient, q *iqPrivateQuery, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "private").WithField("id", msg.ID)
 
 	// roster encode
@@ -40,7 +40,7 @@ func (ex *IQPrivateRoster) Handle(msg *messages.IQ, q *iqPrivateQuery, client *u
 	}
 
 	// reply
-	client.Messages <- &messages.IQ{
+	client.Messages <- &messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   client.JID.String(),
 		From: client.JID.Domain,

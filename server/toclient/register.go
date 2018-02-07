@@ -29,7 +29,7 @@ func (state *RegisterFormRequest) Process() state.State {
 		return nil
 	}
 
-	var msg messages.IQ
+	var msg messages.IQClient
 	if err := state.Client.In.DecodeElement(&msg, state.element); err != nil {
 		state.Client.Log.Warn("is no iq: ", err)
 		return state
@@ -52,7 +52,7 @@ func (state *RegisterFormRequest) Process() state.State {
 		state.Client.Log.Warn("is no iq register: ", err)
 		return nil
 	}
-	state.Client.Out.Encode(&messages.IQ{
+	state.Client.Out.Encode(&messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   state.Client.JID.String(),
 		From: state.Client.JID.Domain,
@@ -90,7 +90,7 @@ func (state *RegisterRequest) Process() state.State {
 		state.Client.Log.Warn("unable to read: ", err)
 		return nil
 	}
-	var msg messages.IQ
+	var msg messages.IQClient
 	if err = state.Client.In.DecodeElement(&msg, element); err != nil {
 		state.Client.Log.Warn("is no iq: ", err)
 		return state
@@ -120,7 +120,7 @@ func (state *RegisterRequest) Process() state.State {
 	account := model.NewAccount(state.Client.JID, q.Password)
 	err = state.database.AddAccount(account)
 	if err != nil {
-		state.Client.Out.Encode(&messages.IQ{
+		state.Client.Out.Encode(&messages.IQClient{
 			Type: messages.IQTypeResult,
 			To:   state.Client.JID.String(),
 			From: state.Client.JID.Domain,
@@ -129,7 +129,7 @@ func (state *RegisterRequest) Process() state.State {
 					<username>%s</username>
 					<password>%s</password>
 				</query>`, messages.NSIQRegister, q.Username, q.Password)),
-			Error: &messages.Error{
+			Error: &messages.ErrorClient{
 				Code: "409",
 				Type: "cancel",
 				Any: xml.Name{
@@ -141,7 +141,7 @@ func (state *RegisterRequest) Process() state.State {
 		state.Client.Log.Warn("database error: ", err)
 		return state
 	}
-	state.Client.Out.Encode(&messages.IQ{
+	state.Client.Out.Encode(&messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   state.Client.JID.String(),
 		From: state.Client.JID.Domain,

@@ -1,4 +1,4 @@
-package cmd
+package daemon
 
 import (
 	"crypto/tls"
@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/crypto/acme/autocert"
 
+	serverDaemon "dev.sum7.eu/genofire/yaja/daemon/server"
 	"dev.sum7.eu/genofire/yaja/database"
-	"dev.sum7.eu/genofire/yaja/model/config"
 	"dev.sum7.eu/genofire/yaja/server/extension"
 
 	"dev.sum7.eu/genofire/golang-lib/file"
@@ -22,10 +22,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var configPath string
-
 var (
-	configData       = &config.Config{}
+	serverConfig     = &serverDaemon.Config{}
 	db               = &database.State{}
 	statesaveWorker  *worker.Worker
 	srv              *server.Server
@@ -34,35 +32,35 @@ var (
 	extensionsServer extension.Extensions
 )
 
-// serverCmd represents the serve command
-var serverCmd = &cobra.Command{
+// ServerCMD represents the serve command
+var ServerCMD = &cobra.Command{
 	Use:     "server",
-	Short:   "Runs the yaja server",
-	Example: "yaja serve -c /etc/yaja.conf",
+	Short:   "runs xmpp server",
+	Example: "yaja daemon server -c /etc/yaja.conf",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if err := file.ReadTOML(configPath, configData); err != nil {
+		if err := file.ReadTOML(configPath, serverConfig); err != nil {
 			log.Fatal("unable to load config file:", err)
 		}
 
-		log.SetLevel(configData.Logging.Level)
+		log.SetLevel(serverConfig.Logging.Level)
 
-		if err := file.ReadJSON(configData.StatePath, db); err != nil {
+		if err := file.ReadJSON(serverConfig.StatePath, db); err != nil {
 			log.Warn("unable to load state file:", err)
 		}
 
 		statesaveWorker = worker.NewWorker(time.Minute, func() {
-			file.SaveJSON(configData.StatePath, db)
-			log.Info("save state to:", configData.StatePath)
+			file.SaveJSON(serverConfig.StatePath, db)
+			log.Info("save state to:", serverConfig.StatePath)
 		})
 
 		m := autocert.Manager{
-			Cache:  autocert.DirCache(configData.TLSDir),
+			Cache:  autocert.DirCache(serverConfig.TLSDir),
 			Prompt: autocert.AcceptTOS,
 		}
 
 		// https server to handle acme (by letsencrypt)
-		for _, addr := range configData.Address.Webserver {
+		for _, addr := range serverConfig.Address.Webserver {
 			hs := &http.Server{
 				Addr:      addr,
 				TLSConfig: &tls.Config{GetCertificate: m.GetCertificate},
@@ -77,12 +75,12 @@ var serverCmd = &cobra.Command{
 		srv = &server.Server{
 			TLSManager:       &m,
 			Database:         db,
-			ClientAddr:       configData.Address.Client,
-			ServerAddr:       configData.Address.Server,
-			LoggingClient:    configData.Logging.LevelClient,
-			LoggingServer:    configData.Logging.LevelServer,
-			RegisterEnable:   configData.Register.Enable,
-			RegisterDomains:  configData.Register.Domains,
+			ClientAddr:       serverConfig.Address.Client,
+			ServerAddr:       serverConfig.Address.Server,
+			LoggingClient:    serverConfig.Logging.LevelClient,
+			LoggingServer:    serverConfig.Logging.LevelServer,
+			RegisterEnable:   serverConfig.Register.Enable,
+			RegisterDomains:  serverConfig.Register.Domains,
 			ExtensionsServer: extensionsServer,
 			ExtensionsClient: extensionsClient,
 		}
@@ -117,12 +115,12 @@ func quit() {
 	srv.Close()
 	statesaveWorker.Close()
 
-	file.SaveJSON(configData.StatePath, db)
+	file.SaveJSON(serverConfig.StatePath, db)
 }
 
 func reload() {
 	log.Info("start reloading...")
-	var configNewData *config.Config
+	var configNewData *serverDaemon.Config
 
 	if err := file.ReadTOML(configPath, configNewData); err != nil {
 		log.Warn("unable to load config file:", err)
@@ -136,7 +134,7 @@ func reload() {
 
 	//TODO fetch changing address (to set restart)
 
-	if configNewData.StatePath != configData.StatePath {
+	if configNewData.StatePath != serverConfig.StatePath {
 		statesaveWorker.Close()
 		statesaveWorker := worker.NewWorker(time.Minute, func() {
 			file.SaveJSON(configNewData.StatePath, db)
@@ -147,10 +145,10 @@ func reload() {
 
 	restartServer := false
 
-	if configNewData.TLSDir != configData.TLSDir {
+	if configNewData.TLSDir != serverConfig.TLSDir {
 
 		m := autocert.Manager{
-			Cache:  autocert.DirCache(configData.TLSDir),
+			Cache:  autocert.DirCache(serverConfig.TLSDir),
 			Prompt: autocert.AcceptTOS,
 		}
 
@@ -176,7 +174,7 @@ func reload() {
 		srv = newServer
 	}
 
-	configData = configNewData
+	serverConfig = configNewData
 	log.Info("reloaded")
 }
 
@@ -200,7 +198,6 @@ func init() {
 			&extension.IQPing{},
 		})
 
-	RootCmd.AddCommand(serverCmd)
-	serverCmd.Flags().StringVarP(&configPath, "config", "c", "yaja.conf", "Path to configuration file")
+	ServerCMD.Flags().StringVarP(&configPath, "config", "c", "yaja-server.conf", "Path to configuration file")
 
 }

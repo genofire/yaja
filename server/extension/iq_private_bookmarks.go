@@ -11,7 +11,7 @@ type IQPrivateBookmark struct {
 	iqPrivateExtension
 }
 
-func (ex *IQPrivateBookmark) Handle(msg *messages.IQ, q *iqPrivateQuery, client *utils.Client) bool {
+func (ex *IQPrivateBookmark) Handle(msg *messages.IQClient, q *iqPrivateQuery, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "private").WithField("id", msg.ID)
 
 	// storage encode
@@ -35,7 +35,7 @@ func (ex *IQPrivateBookmark) Handle(msg *messages.IQ, q *iqPrivateQuery, client 
 	}
 
 	// reply
-	client.Messages <- &messages.IQ{
+	client.Messages <- &messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   client.JID.String(),
 		From: client.JID.Domain,

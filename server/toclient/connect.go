@@ -199,7 +199,7 @@ func (state *AuthedStream) Process() state.State {
 		state.Client.Log.Warn("unable to read: ", err)
 		return nil
 	}
-	var msg messages.IQ
+	var msg messages.IQClient
 	if err = state.Client.In.DecodeElement(&msg, element); err != nil {
 		state.Client.Log.Warn("is no iq: ", err)
 		return nil
@@ -212,11 +212,8 @@ func (state *AuthedStream) Process() state.State {
 		state.Client.Log.Warn("iq with error: ", msg.Error.Code)
 		return nil
 	}
-	type query struct {
-		XMLName  xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-bind bind"`
-		Resource string   `xml:"resource"`
-	}
-	q := &query{}
+
+	var q messages.Bind
 	err = xml.Unmarshal(msg.Body, q)
 	if err != nil {
 		state.Client.Log.Warn("is no iq bind: ", err)
@@ -228,7 +225,7 @@ func (state *AuthedStream) Process() state.State {
 		state.Client.JID.Resource = q.Resource
 	}
 	state.Client.Log = state.Client.Log.WithField("jid", state.Client.JID.Full())
-	state.Client.Out.Encode(&messages.IQ{
+	state.Client.Out.Encode(&messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   state.Client.JID.String(),
 		From: state.Client.JID.Domain,

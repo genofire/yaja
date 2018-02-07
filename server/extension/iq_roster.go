@@ -15,7 +15,7 @@ type IQRoster struct {
 
 func (ex *IQRoster) Spaces() []string { return []string{"jabber:iq:roster"} }
 
-func (ex *IQRoster) Get(msg *messages.IQ, client *utils.Client) bool {
+func (ex *IQRoster) Get(msg *messages.IQClient, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "roster").WithField("id", msg.ID)
 
 	// query encode
@@ -59,7 +59,7 @@ func (ex *IQRoster) Get(msg *messages.IQ, client *utils.Client) bool {
 	}
 
 	// reply
-	client.Messages <- &messages.IQ{
+	client.Messages <- &messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   client.JID.String(),
 		From: client.JID.Domain,
