@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
 
 	"dev.sum7.eu/genofire/golang-lib/file"
@@ -15,12 +16,15 @@ import (
 	"dev.sum7.eu/genofire/yaja/client"
 	"dev.sum7.eu/genofire/yaja/daemon/tester"
 	"dev.sum7.eu/genofire/yaja/messages"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
 
-var configTester = &tester.Config{}
+var (
+	configTester   = &tester.Config{}
+	testerInstance = tester.NewTester()
+	testerWorker   *worker.Worker
+)
 
 // TesterCMD represents the serve command
 var TesterCMD = &cobra.Command{
@@ -35,14 +39,9 @@ var TesterCMD = &cobra.Command{
 
 		log.SetLevel(configTester.Logging)
 
-		if err := file.ReadJSON(configTester.StatePath, db); err != nil {
+		if err := file.ReadJSON(configTester.AccountsPath, testerInstance); err != nil {
 			log.Warn("unable to load state file:", err)
 		}
-
-		statesaveWorker = worker.NewWorker(time.Minute, func() {
-			file.SaveJSON(configTester.StatePath, db)
-			log.Info("save state to:", configTester.StatePath)
-		})
 
 		// https server to handle acme (by letsencrypt)
 		hs := &http.Server{
@@ -71,19 +70,27 @@ var TesterCMD = &cobra.Command{
 		if err != nil {
 			log.Fatal("unable to connect with main jabber client: ", err)
 		}
+		defer mainClient.Close()
 
 		for _, admin := range configTester.Admins {
-			mainClient.Out.Encode(&messages.MessageClient{
-				From: mainClient.JID.Full(),
-				To:   admin.Full(),
+			mainClient.Send(&messages.MessageClient{
+				To:   admin,
 				Type: "chat",
 				Body: "yaja tester starts",
 			})
 		}
 
-		go statesaveWorker.Start()
+		testerInstance.Start(mainClient, configTester.Client.Password)
+		testerInstance.CheckStatus()
+		testerWorker = worker.NewWorker(time.Minute, func() {
+			testerInstance.CheckStatus()
+			file.SaveJSON(configTester.AccountsPath, testerInstance)
+			file.SaveJSON(configTester.OutputPath, testerInstance.Output())
+		})
 
-		log.Infoln("yaja tester started ")
+		go testerWorker.Start()
+
+		log.Info("yaja tester started ")
 
 		// Wait for INT/TERM
 		sigs := make(chan os.Signal, 1)
@@ -105,10 +112,11 @@ var TesterCMD = &cobra.Command{
 }
 
 func quitTester() {
+	testerWorker.Close()
+	testerInstance.Close()
 	srv.Close()
-	statesaveWorker.Close()
 
-	file.SaveJSON(configTester.StatePath, db)
+	file.SaveJSON(configTester.AccountsPath, db)
 }
 
 func init() {

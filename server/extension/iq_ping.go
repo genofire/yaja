@@ -1,9 +1,8 @@
 package extension
 
 import (
-	"encoding/xml"
-
 	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/model"
 	"dev.sum7.eu/genofire/yaja/server/utils"
 )
 
@@ -16,20 +15,15 @@ func (ex *IQPing) Spaces() []string { return []string{"urn:xmpp:ping"} }
 func (ex *IQPing) Get(msg *messages.IQClient, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "ping").WithField("id", msg.ID)
 
-	// ping encode
-	type ping struct {
-		XMLName xml.Name `xml:"urn:xmpp:ping ping"`
-	}
-	pq := &ping{}
-	if err := xml.Unmarshal(msg.Body, pq); err != nil {
+	if msg.Ping == nil {
 		return false
 	}
 
 	// reply
 	client.Messages <- &messages.IQClient{
 		Type: messages.IQTypeResult,
-		To:   client.JID.String(),
-		From: client.JID.Domain,
+		To:   client.JID,
+		From: model.NewJID(client.JID.Domain),
 		ID:   msg.ID,
 	}
 

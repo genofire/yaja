@@ -25,7 +25,6 @@ import (
 var (
 	serverConfig     = &serverDaemon.Config{}
 	db               = &database.State{}
-	statesaveWorker  *worker.Worker
 	srv              *server.Server
 	certs            *tls.Config
 	extensionsClient extension.Extensions
@@ -179,25 +178,27 @@ func reload() {
 }
 
 func init() {
+
 	extensionsClient = append(extensionsClient,
 		&extension.Message{},
 		&extension.Presence{},
 		extension.IQExtensions{
-			&extension.IQPrivate{},
+			//&extension.IQPrivateBookmark{},
+			//&extension.IQPrivateMetacontact{},
+			//&extension.IQPrivateRoster{},
 			&extension.IQPing{},
-			&extension.IQLast{},
-			&extension.IQDisco{Database: db},
-			&extension.IQRoster{Database: db},
-			&extension.IQExtensionDiscovery{GetSpaces: func() []string {
-				return extensionsClient.Spaces()
-			}},
+			//&extension.IQLast{},
+			//&extension.IQDisco{Database: db},
+			//&extension.IQRoster{Database: db},
+			//&extension.IQExtensionDiscovery{GetSpaces: func() []string {
+			//	return extensionsClient.Spaces()
+			//}},
 		})
 
 	extensionsServer = append(extensionsServer,
 		extension.IQExtensions{
 			&extension.IQPing{},
 		})
-
 	ServerCMD.Flags().StringVarP(&configPath, "config", "c", "yaja-server.conf", "Path to configuration file")
 
 }

@@ -2,7 +2,6 @@ package toclient
 
 import (
 	"encoding/xml"
-	"fmt"
 
 	"dev.sum7.eu/genofire/yaja/database"
 	"dev.sum7.eu/genofire/yaja/messages"
@@ -42,27 +41,21 @@ func (state *RegisterFormRequest) Process() state.State {
 		state.Client.Log.Warn("iq with error: ", msg.Error.Code)
 		return state
 	}
-	type query struct {
-		XMLName xml.Name `xml:"query"`
-	}
-	q := &query{}
-	err := xml.Unmarshal(msg.Body, q)
 
-	if q.XMLName.Space != messages.NSIQRegister || err != nil {
-		state.Client.Log.Warn("is no iq register: ", err)
+	if msg.PrivateRegister == nil {
+		state.Client.Log.Warn("is no iq register")
 		return nil
 	}
 	state.Client.Out.Encode(&messages.IQClient{
 		Type: messages.IQTypeResult,
-		To:   state.Client.JID.String(),
-		From: state.Client.JID.Domain,
+		To:   state.Client.JID,
+		From: model.NewJID(state.Client.JID.Domain),
 		ID:   msg.ID,
-		Body: []byte(fmt.Sprintf(`<query xmlns='%s'><instructions>
-					Choose a username and password for use with this service.
-				</instructions>
-				<username/>
-				<password/>
-			</query>`, messages.NSIQRegister)),
+		PrivateRegister: &messages.IQPrivateRegister{
+			Instructions: "Choose a username and password for use with this service.",
+			Username:     "",
+			Password:     "",
+		},
 	})
 	return state.Next
 }
@@ -103,32 +96,22 @@ func (state *RegisterRequest) Process() state.State {
 		state.Client.Log.Warn("iq with error: ", msg.Error.Code)
 		return state
 	}
-	type query struct {
-		XMLName  xml.Name `xml:"query"`
-		Username string   `xml:"username"`
-		Password string   `xml:"password"`
-	}
-	q := &query{}
-	err = xml.Unmarshal(msg.Body, q)
-	if err != nil {
+	if msg.PrivateRegister == nil {
 		state.Client.Log.Warn("is no iq register: ", err)
 		return nil
 	}
 
-	state.Client.JID.Local = q.Username
+	state.Client.JID.Local = msg.PrivateRegister.Username
 	state.Client.Log = state.Client.Log.WithField("jid", state.Client.JID.Full())
-	account := model.NewAccount(state.Client.JID, q.Password)
+	account := model.NewAccount(state.Client.JID, msg.PrivateRegister.Password)
 	err = state.database.AddAccount(account)
 	if err != nil {
 		state.Client.Out.Encode(&messages.IQClient{
-			Type: messages.IQTypeResult,
-			To:   state.Client.JID.String(),
-			From: state.Client.JID.Domain,
-			ID:   msg.ID,
-			Body: []byte(fmt.Sprintf(`<query xmlns='%s'>
-					<username>%s</username>
-					<password>%s</password>
-				</query>`, messages.NSIQRegister, q.Username, q.Password)),
+			Type:            messages.IQTypeResult,
+			To:              state.Client.JID,
+			From:            model.NewJID(state.Client.JID.Domain),
+			ID:              msg.ID,
+			PrivateRegister: msg.PrivateRegister,
 			Error: &messages.ErrorClient{
 				Code: "409",
 				Type: "cancel",
@@ -143,8 +126,8 @@ func (state *RegisterRequest) Process() state.State {
 	}
 	state.Client.Out.Encode(&messages.IQClient{
 		Type: messages.IQTypeResult,
-		To:   state.Client.JID.String(),
-		From: state.Client.JID.Domain,
+		To:   state.Client.JID,
+		From: model.NewJID(state.Client.JID.Domain),
 		ID:   msg.ID,
 	})
 

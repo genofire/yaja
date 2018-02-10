@@ -3,12 +3,12 @@ package toclient
 import (
 	"crypto/tls"
 	"encoding/base64"
-	"encoding/xml"
 	"fmt"
 	"strings"
 
 	"dev.sum7.eu/genofire/yaja/database"
 	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/model"
 	"dev.sum7.eu/genofire/yaja/server/extension"
 	"dev.sum7.eu/genofire/yaja/server/state"
 	"dev.sum7.eu/genofire/yaja/server/utils"
@@ -213,28 +213,22 @@ func (state *AuthedStream) Process() state.State {
 		return nil
 	}
 
-	var q messages.Bind
-	err = xml.Unmarshal(msg.Body, q)
-	if err != nil {
+	if msg.Bind == nil {
 		state.Client.Log.Warn("is no iq bind: ", err)
 		return nil
 	}
-	if q.Resource == "" {
+	if msg.Bind.Resource == "" {
 		state.Client.JID.Resource = makeResource()
 	} else {
-		state.Client.JID.Resource = q.Resource
+		state.Client.JID.Resource = msg.Bind.Resource
 	}
 	state.Client.Log = state.Client.Log.WithField("jid", state.Client.JID.Full())
 	state.Client.Out.Encode(&messages.IQClient{
 		Type: messages.IQTypeResult,
-		To:   state.Client.JID.String(),
-		From: state.Client.JID.Domain,
+		To:   state.Client.JID,
+		From: model.NewJID(state.Client.JID.Domain),
 		ID:   msg.ID,
-		Body: []byte(fmt.Sprintf(
-			`<bind xmlns='%s'>
-				<jid>%s</jid>
-			</bind>`,
-			messages.NSBind, state.Client.JID.Full())),
+		Bind: &messages.Bind{JID: state.Client.JID},
 	})
 
 	return state.Next

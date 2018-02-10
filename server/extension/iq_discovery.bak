@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 
 	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/model"
 	"dev.sum7.eu/genofire/yaja/server/utils"
 )
 
@@ -59,8 +60,8 @@ func (ex *IQExtensionDiscovery) Get(msg *messages.IQClient, client *utils.Client
 	// replay
 	client.Messages <- &messages.IQClient{
 		Type: messages.IQTypeResult,
-		To:   client.JID.String(),
-		From: client.JID.Domain,
+		To:   client.JID,
+		From: model.NewJID(client.JID.Domain),
 		ID:   msg.ID,
 		Body: queryByte,
 	}

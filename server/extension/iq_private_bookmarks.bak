@@ -4,14 +4,15 @@ import (
 	"encoding/xml"
 
 	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/model"
 	"dev.sum7.eu/genofire/yaja/server/utils"
 )
 
 type IQPrivateBookmark struct {
-	iqPrivateExtension
+	IQExtension
 }
 
-func (ex *IQPrivateBookmark) Handle(msg *messages.IQClient, q *iqPrivateQuery, client *utils.Client) bool {
+func (ex *IQPrivateBookmark) Handle(msg *messages.IQClient, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "private").WithField("id", msg.ID)
 
 	// storage encode
@@ -37,8 +38,8 @@ func (ex *IQPrivateBookmark) Handle(msg *messages.IQClient, q *iqPrivateQuery, c
 	// reply
 	client.Messages <- &messages.IQClient{
 		Type: messages.IQTypeResult,
-		To:   client.JID.String(),
-		From: client.JID.Domain,
+		To:   client.JID,
+		From: model.NewJID(client.JID.Domain),
 		ID:   msg.ID,
 		Body: queryByte,
 	}

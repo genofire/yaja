@@ -36,6 +36,9 @@ func NewJID(jidString string) *JID {
 
 // Bare get the "bare" jid
 func (jid *JID) Bare() string {
+	if jid == nil {
+		return ""
+	}
 	if jid.Local != "" {
 		return jid.Local + "@" + jid.Domain
 	}
@@ -46,6 +49,9 @@ func (jid *JID) String() string { return jid.Bare() }
 
 // Full get the "full" jid as string
 func (jid *JID) Full() string {
+	if jid == nil {
+		return ""
+	}
 	if jid.Resource != "" {
 		return jid.Bare() + "/" + jid.Resource
 	}

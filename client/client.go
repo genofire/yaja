@@ -1,14 +1,10 @@
 package client
 
 import (
-	"crypto/md5"
-	"crypto/rand"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"math/big"
 	"net"
 	"strings"
 
@@ -26,8 +22,23 @@ type Client struct {
 	JID *model.JID
 }
 
-func NewClient(jid model.JID, password string) (*Client, error) {
-	conn, err := net.Dial("tcp", jid.Domain+":5222")
+func NewClient(jid *model.JID, password string) (*Client, error) {
+	_, srvEntries, err := net.LookupSRV("xmpp-client", "tcp", jid.Domain)
+	addr := jid.Domain + ":5222"
+	if err == nil && len(srvEntries) > 0 {
+		bestSrv := srvEntries[0]
+		for _, srv := range srvEntries {
+			if srv.Priority <= bestSrv.Priority && srv.Weight >= bestSrv.Weight {
+				bestSrv = srv
+				addr = fmt.Sprintf("%s:%d", srv.Target, srv.Port)
+			}
+		}
+	}
+	a := strings.SplitN(addr, ":", 2)
+	if len(a) == 1 {
+		addr += ":5222"
+	}
+	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +47,7 @@ func NewClient(jid model.JID, password string) (*Client, error) {
 		In:   xml.NewDecoder(conn),
 		Out:  xml.NewEncoder(conn),
 
-		JID: &jid,
+		JID: jid,
 	}
 
 	if err = client.connect(password); err != nil {
@@ -54,51 +65,31 @@ func (c *Client) Close() error {
 	return nil
 }
 
-func (client *Client) Read() (*xml.StartElement, error) {
-	for {
-		nextToken, err := client.In.Token()
-		if err != nil {
-			return nil, err
-		}
-		switch nextToken.(type) {
-		case xml.StartElement:
-			element := nextToken.(xml.StartElement)
-			return &element, nil
-		}
-	}
-}
-func (client *Client) ReadElement(p interface{}) error {
-	element, err := client.Read()
-	if err != nil {
-		return err
-	}
-	return client.In.DecodeElement(p, element)
-}
-
-func (client *Client) init() error {
+func (client *Client) startStream() (*messages.StreamFeatures, error) {
 	// XMPP-Connection
 	_, err := fmt.Fprintf(client.conn, "<?xml version='1.0'?>\n"+
 		"<stream:stream to='%s' xmlns='%s'\n"+
 		" xmlns:stream='%s' version='1.0'>\n",
 		model.XMLEscape(client.JID.Domain), messages.NSClient, messages.NSStream)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	element, err := client.Read()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if element.Name.Space != messages.NSStream || element.Name.Local != "stream" {
-		return errors.New("is not stream")
+		return nil, errors.New("is not stream")
 	}
-	return nil
+	f := &messages.StreamFeatures{}
+	if err := client.ReadElement(f); err != nil {
+		return nil, err
+	}
+	return f, nil
 }
+
 func (client *Client) connect(password string) error {
-	if err := client.init(); err != nil {
-		return err
-	}
-	var f messages.StreamFeatures
-	if err := client.ReadElement(&f); err != nil {
+	if _, err := client.startStream(); err != nil {
 		return err
 	}
 	if err := client.Out.Encode(&messages.TLSStartTLS{}); err != nil {
@@ -123,106 +114,25 @@ func (client *Client) connect(password string) error {
 	if err := tlsconn.VerifyHostname(client.JID.Domain); err != nil {
 		return err
 	}
-	if err := client.init(); err != nil {
-		return err
-	}
-	//auth:
-	if err := client.ReadElement(&f); err != nil {
-		return err
-	}
-	mechanism := ""
-	for _, m := range f.Mechanisms.Mechanism {
-		if m == "PLAIN" {
-			mechanism = m
-			// Plain authentication: send base64-encoded \x00 user \x00 password.
-			raw := "\x00" + client.JID.Local + "\x00" + password
-			enc := make([]byte, base64.StdEncoding.EncodedLen(len(raw)))
-			base64.StdEncoding.Encode(enc, []byte(raw))
-			fmt.Fprintf(client.conn, "<auth xmlns='%s' mechanism='PLAIN'>%s</auth>\n", messages.NSSASL, enc)
-			break
-		}
-		if m == "DIGEST-MD5" {
-			mechanism = m
-			// Digest-MD5 authentication
-			fmt.Fprintf(client.conn, "<auth xmlns='%s' mechanism='DIGEST-MD5'/>\n", messages.NSSASL)
-			var ch string
-			if err := client.ReadElement(&ch); err != nil {
-				return err
-			}
-			b, err := base64.StdEncoding.DecodeString(string(ch))
-			if err != nil {
-				return err
-			}
-			tokens := map[string]string{}
-			for _, token := range strings.Split(string(b), ",") {
-				kv := strings.SplitN(strings.TrimSpace(token), "=", 2)
-				if len(kv) == 2 {
-					if kv[1][0] == '"' && kv[1][len(kv[1])-1] == '"' {
-						kv[1] = kv[1][1 : len(kv[1])-1]
-					}
-					tokens[kv[0]] = kv[1]
-				}
-			}
-			realm, _ := tokens["realm"]
-			nonce, _ := tokens["nonce"]
-			qop, _ := tokens["qop"]
-			charset, _ := tokens["charset"]
-			cnonceStr := cnonce()
-			digestURI := "xmpp/" + client.JID.Domain
-			nonceCount := fmt.Sprintf("%08x", 1)
-			digest := saslDigestResponse(client.JID.Local, realm, password, nonce, cnonceStr, "AUTHENTICATE", digestURI, nonceCount)
-			message := "username=\"" + client.JID.Local + "\", realm=\"" + realm + "\", nonce=\"" + nonce + "\", cnonce=\"" + cnonceStr +
-				"\", nc=" + nonceCount + ", qop=" + qop + ", digest-uri=\"" + digestURI + "\", response=" + digest + ", charset=" + charset
-
-			fmt.Fprintf(client.conn, "<response xmlns='%s'>%s</response>\n", messages.NSSASL, base64.StdEncoding.EncodeToString([]byte(message)))
-
-			err = client.ReadElement(&ch)
-			if err != nil {
-				return err
-			}
-			_, err = base64.StdEncoding.DecodeString(ch)
-			if err != nil {
-				return err
-			}
-			fmt.Fprintf(client.conn, "<response xmlns='%s'/>\n", messages.NSSASL)
-			break
-		}
-	}
-	if mechanism == "" {
-		return fmt.Errorf("PLAIN authentication is not an option: %v", f.Mechanisms.Mechanism)
-	}
-	element, err := client.Read()
+	err := client.auth(password)
 	if err != nil {
 		return err
 	}
-	if element.Name.Local != "success" {
-		return errors.New("auth failed: " + element.Name.Local)
-	}
-
-	err = client.init()
+	_, err = client.startStream()
 	if err != nil {
-		return err
-	}
-	if err := client.ReadElement(&f); err != nil {
 		return err
 	}
 	// bind to resource
-	var msg string
-	if client.JID.Resource == "" {
-		msg = fmt.Sprintf("<bind xmlns='%s'></bind>", messages.NSBind)
-	} else {
-		msg = fmt.Sprintf(
-			`<bind xmlns='%s'>
-				<resource>%s</resource>
-			</bind>`,
-			messages.NSBind, client.JID.Resource)
+	bind := &messages.Bind{}
+	if client.JID.Resource != "" {
+		bind.Resource = client.JID.Resource
 	}
 	client.Out.Encode(&messages.IQClient{
 		Type: messages.IQTypeSet,
-		To:   client.JID.Domain,
-		From: client.JID.Full(),
+		To:   model.NewJID(client.JID.Domain),
+		From: client.JID,
 		ID:   utils.CreateCookieString(),
-		Body: []byte(msg),
+		Bind: bind,
 	})
 
 	var iq messages.IQClient
@@ -237,39 +147,10 @@ func (client *Client) connect(password string) error {
 		client.JID.Domain = iq.Bind.JID.Domain
 		client.JID.Resource = iq.Bind.JID.Resource
 	} else {
-		return errors.New(string(iq.Body))
+		return errors.New(fmt.Sprintf("%v", iq.Other))
 	}
 	// set status
-	client.Out.Encode(&messages.PresenceClient{Show: "online", Status: "yaja client"})
+	client.Send(&messages.PresenceClient{Show: "online", Status: "yaja client"})
 
-	return nil
-}
-
-func saslDigestResponse(username, realm, passwd, nonce, cnonceStr, authenticate, digestURI, nonceCountStr string) string {
-	h := func(text string) []byte {
-		h := md5.New()
-		h.Write([]byte(text))
-		return h.Sum(nil)
-	}
-	hex := func(bytes []byte) string {
-		return fmt.Sprintf("%x", bytes)
-	}
-	kd := func(secret, data string) []byte {
-		return h(secret + ":" + data)
-	}
-
-	a1 := string(h(username+":"+realm+":"+passwd)) + ":" + nonce + ":" + cnonceStr
-	a2 := authenticate + ":" + digestURI
-	response := hex(kd(hex(h(a1)), nonce+":"+nonceCountStr+":"+cnonceStr+":auth:"+hex(h(a2))))
-	return response
-}
-
-func cnonce() string {
-	randSize := big.NewInt(0)
-	randSize.Lsh(big.NewInt(1), 64)
-	cn, err := rand.Int(rand.Reader, randSize)
-	if err != nil {
-		return ""
-	}
-	return fmt.Sprintf("%016x", cn)
+	return err
 }

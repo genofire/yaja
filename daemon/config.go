@@ -1,3 +1,10 @@
 package daemon
 
-var configPath string
+import (
+	"dev.sum7.eu/genofire/golang-lib/worker"
+)
+
+var (
+	configPath      string
+	statesaveWorker *worker.Worker
+)

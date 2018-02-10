@@ -15,12 +15,6 @@ type StreamFeatures struct {
 	Session    bool
 }
 
-type StreamError struct {
-	XMLName xml.Name `xml:"http://etherx.jabber.org/streams error"`
-	Any     xml.Name
-	Text    string
-}
-
 // RFC 3920  C.3  TLS name space
 type TLSStartTLS struct {
 	XMLName  xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-tls starttls"`
