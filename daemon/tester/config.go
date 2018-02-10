@@ -10,7 +10,6 @@ type Config struct {
 	AccountsPath string       `toml:"accounts_path"`
 	OutputPath   string       `toml:"output_path"`
 	Logging      log.Level    `toml:"logging"`
-	Webserver    string       `toml:"webserver"`
 	Admins       []*model.JID `toml:"admins"`
 	Client       struct {
 		JID      *model.JID `toml:"jid"`

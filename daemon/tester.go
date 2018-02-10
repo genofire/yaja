@@ -1,15 +1,12 @@
 package daemon
 
 import (
-	"crypto/tls"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/crypto/acme/autocert"
 
 	"dev.sum7.eu/genofire/golang-lib/file"
 	"dev.sum7.eu/genofire/golang-lib/worker"
@@ -41,29 +38,6 @@ var TesterCMD = &cobra.Command{
 
 		if err := file.ReadJSON(configTester.AccountsPath, testerInstance); err != nil {
 			log.Warn("unable to load state file:", err)
-		}
-
-		// https server to handle acme (by letsencrypt)
-		hs := &http.Server{
-			Addr: configTester.Webserver,
-		}
-		if configTester.TLSDir != "" {
-			m := autocert.Manager{
-				Cache:  autocert.DirCache(configTester.TLSDir),
-				Prompt: autocert.AcceptTOS,
-			}
-			hs.TLSConfig = &tls.Config{GetCertificate: m.GetCertificate}
-			go func(hs *http.Server) {
-				if err := hs.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
-					log.Errorf("webserver with addr %s: %s", hs.Addr, err)
-				}
-			}(hs)
-		} else {
-			go func(hs *http.Server) {
-				if err := hs.ListenAndServe(); err != http.ErrServerClosed {
-					log.Errorf("webserver with addr %s: %s", hs.Addr, err)
-				}
-			}(hs)
 		}
 
 		mainClient, err := client.NewClient(configTester.Client.JID, configTester.Client.Password)

@@ -16,7 +16,9 @@ type Output struct {
 
 type Link struct {
 	Source     string `json:"source"`
+	SourceJID  string `json:"source_jid"`
 	Target     string `json:"target"`
+	TargetJID  string `json:"target_jid"`
 	FromSource bool   `json:"from_source"`
 	FromTarget bool   `json:"from_target"`
 }
@@ -52,13 +54,17 @@ func (t *Tester) Output() *Output {
 			toJID := model.NewJID(to)
 			link := &Link{
 				Source:     status.JID.Domain,
+				SourceJID:  status.JID.Bare(),
 				Target:     toJID.Domain,
+				TargetJID:  toJID.Bare(),
 				FromSource: linkOK,
 				FromTarget: false,
 			}
 			if switchSourceTarget {
 				link.Source = toJID.Domain
+				link.SourceJID = toJID.Bare()
 				link.Target = status.JID.Domain
+				link.TargetJID = status.JID.Bare()
 				link.FromSource = false
 				link.FromTarget = linkOK
 			}

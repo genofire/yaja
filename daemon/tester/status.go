@@ -9,7 +9,7 @@ import (
 
 type Status struct {
 	client               *client.Client
-	password             string
+	account              *Account
 	JID                  *model.JID        `json:"jid"`
 	Domain               string            `json:"domain"`
 	Login                bool              `json:"is_online"`
@@ -18,10 +18,11 @@ type Status struct {
 	TLSVersion           string            `json:"tls_version"`
 }
 
-func NewStatus(jid *model.JID, password string) *Status {
+func NewStatus(acc *Account) *Status {
 	return &Status{
-		JID:                  jid,
-		Domain:               jid.Domain,
+		account:              acc,
+		JID:                  acc.JID,
+		Domain:               acc.JID.Domain,
 		MessageForConnection: make(map[string]string),
 		Connections:          make(map[string]bool),
 	}

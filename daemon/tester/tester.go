@@ -11,13 +11,13 @@ import (
 
 type Tester struct {
 	mainClient *client.Client
-	Accounts   map[string]string  `json:"accounts"`
-	Status     map[string]*Status `json:"-"`
+	Accounts   map[string]*Account `json:"accounts"`
+	Status     map[string]*Status  `json:"-"`
 }
 
 func NewTester() *Tester {
 	return &Tester{
-		Accounts: make(map[string]string),
+		Accounts: make(map[string]*Account),
 		Status:   make(map[string]*Status),
 	}
 }
@@ -26,16 +26,19 @@ func (t *Tester) Start(mainClient *client.Client, password string) {
 
 	t.mainClient = mainClient
 
-	status := NewStatus(mainClient.JID, password)
+	status := NewStatus(&Account{
+		JID:      mainClient.JID,
+		Password: password,
+	})
 	status.client = mainClient
 	status.Login = true
 	status.Update()
 
-	t.Status[mainClient.JID.Bare()] = status
+	t.Status[mainClient.JID.Domain] = status
 	go t.StartBot(status)
 
-	for jidString, passwd := range t.Accounts {
-		t.Connect(jidString, passwd)
+	for _, acc := range t.Accounts {
+		t.Connect(acc)
 	}
 }
 func (t *Tester) Close() {
@@ -45,27 +48,28 @@ func (t *Tester) Close() {
 	}
 }
 
-func (t *Tester) Connect(jidString, password string) {
-	logCTX := log.WithField("jid", jidString)
-	jid := model.NewJID(jidString)
-	status, ok := t.Status[jidString]
+func (t *Tester) Connect(acc *Account) {
+	logCTX := log.WithField("jid", acc.JID.Full())
+	status, ok := t.Status[acc.JID.Bare()]
 	if !ok {
-		status = NewStatus(jid, password)
-		t.Status[jidString] = status
+		status = NewStatus(acc)
+		t.Status[acc.JID.Bare()] = status
 	} else if status.JID == nil {
-		status.JID = jid
+		status.JID = acc.JID
 	}
 	if status.Login {
 		logCTX.Warn("is already loggedin")
 		return
 	}
-	c, err := client.NewClient(jid, password)
+	c, err := client.NewClient(acc.JID, acc.Password)
 	if err != nil {
 		logCTX.Warnf("could not connect client: %s", err)
 	} else {
 		logCTX.Info("client connected")
 		status.Login = true
 		status.client = c
+		status.account.JID = c.JID
+		status.JID = c.JID
 		status.Update()
 		go t.StartBot(status)
 	}
@@ -102,9 +106,9 @@ func (t *Tester) CheckStatus() {
 	for ownJID, own := range t.Status {
 		logCTX := log.WithField("jid", ownJID)
 		if !own.Login {
-			pass, ok := t.Accounts[ownJID]
+			acc, ok := t.Accounts[ownJID]
 			if ok {
-				t.Connect(ownJID, pass)
+				t.Connect(acc)
 			}
 			if !own.Login {
 				continue
