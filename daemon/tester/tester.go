@@ -12,11 +12,14 @@ import (
 )
 
 type Tester struct {
-	mainClient *client.Client
-	Timeout    time.Duration       `json:"-"`
-	Accounts   map[string]*Account `json:"accounts"`
-	Status     map[string]*Status  `json:"-"`
-	mux        sync.Mutex
+	mainClient     *client.Client
+	Timeout        time.Duration       `json:"-"`
+	Accounts       map[string]*Account `json:"accounts"`
+	Status         map[string]*Status  `json:"-"`
+	mux            sync.Mutex
+	LoggingClients *log.Logger  `json:"-"`
+	LoggingBots    log.Level    `json:"-"`
+	Admins         []*model.JID `json:"-"`
 }
 
 func NewTester() *Tester {
@@ -68,7 +71,12 @@ func (t *Tester) Connect(acc *Account) {
 		logCTX.Warn("is already loggedin")
 		return
 	}
-	c, err := client.NewClientProtocolDuration(acc.JID, acc.Password, "tcp", t.Timeout)
+	c := &client.Client{
+		Timeout: t.Timeout,
+		JID:     acc.JID,
+		Logging: t.LoggingClients,
+	}
+	err := c.Connect(acc.Password)
 	if err != nil {
 		logCTX.Warnf("could not connect client: %s", err)
 	} else {
@@ -143,7 +151,7 @@ func (t *Tester) CheckStatus() {
 				logCTXTo = logCTXTo.WithField("msg-old", msg)
 				own.Connections[jid] = false
 				if ok, exists := own.Connections[jid]; !exists || ok {
-					logCTXTo.Warn("could not recv msg")
+					logCTXTo.Info("could not recv msg")
 				} else {
 					logCTXTo.Debug("could not recv msg")
 				}
@@ -157,7 +165,7 @@ func (t *Tester) CheckStatus() {
 				To:   s.JID,
 			})
 			own.MessageForConnection[s.JID.Bare()] = msg
-			logCTXTo.Info("test send")
+			logCTXTo.Debug("test send")
 			send++
 		}
 	}

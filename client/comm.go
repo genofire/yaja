@@ -2,26 +2,34 @@ package client
 
 import (
 	"encoding/xml"
-	"log"
 
 	"dev.sum7.eu/genofire/yaja/messages"
 )
 
 func (client *Client) Read() (*xml.StartElement, error) {
 	for {
-		nextToken, err := client.In.Token()
+		nextToken, err := client.in.Token()
 		if err != nil {
 			return nil, err
 		}
 		switch nextToken.(type) {
 		case xml.StartElement:
 			element := nextToken.(xml.StartElement)
+			client.Logging.Debug("recv xml: ", messages.XMLStartElementToString(&element))
 			return &element, nil
 		}
 	}
 }
-
-func (client *Client) ReadElement(p interface{}) error {
+func (client *Client) Decode(p interface{}, element *xml.StartElement) error {
+	err := client.in.DecodeElement(p, element)
+	if err != nil {
+		client.Logging.Debugf("decode failed xml: %s to: %v", messages.XMLStartElementToString(element), p)
+	} else {
+		client.Logging.Debugf("decode xml: %s to: %v with children %s", messages.XMLStartElementToString(element), p, messages.XMLChildrenString(p))
+	}
+	return err
+}
+func (client *Client) ReadDecode(p interface{}) error {
 	element, err := client.Read()
 	if err != nil {
 		return err
@@ -31,36 +39,45 @@ func (client *Client) ReadElement(p interface{}) error {
 	if !ok {
 		iq = &messages.IQClient{}
 	}
-	err = client.In.DecodeElement(iq, element)
+	err = client.Decode(iq, element)
 	if err == nil && iq.Ping != nil {
-		log.Println("answer ping")
+		client.Logging.Info("ReadElement: auto answer ping")
 		iq.Type = messages.IQTypeResult
 		iq.To = iq.From
 		iq.From = client.JID
-		client.Out.Encode(iq)
+		client.Send(iq)
 		return nil
 	}
 	if ok {
 		return err
 	}
-	return client.In.DecodeElement(p, element)
+	return client.Decode(p, element)
+}
+func (client *Client) encode(p interface{}) error {
+	err := client.out.Encode(p)
+	if err != nil {
+		client.Logging.Debugf("encode failed %v", p)
+	} else {
+		client.Logging.Debugf("encode %v with children %s", p, messages.XMLChildrenString(p))
+	}
+	return err
 }
 
 func (client *Client) Send(p interface{}) error {
 	msg, ok := p.(*messages.MessageClient)
 	if ok {
 		msg.From = client.JID
-		return client.Out.Encode(msg)
+		return client.encode(msg)
 	}
 	iq, ok := p.(*messages.IQClient)
 	if ok {
 		iq.From = client.JID
-		return client.Out.Encode(iq)
+		return client.encode(iq)
 	}
 	pc, ok := p.(*messages.PresenceClient)
 	if ok {
 		pc.From = client.JID
-		return client.Out.Encode(pc)
+		return client.encode(pc)
 	}
-	return client.Out.Encode(p)
+	return client.encode(p)
 }

@@ -7,14 +7,16 @@ import (
 )
 
 type Config struct {
-	TLSDir       string            `toml:"tlsdir"`
-	AccountsPath string            `toml:"accounts_path"`
-	OutputPath   string            `toml:"output_path"`
-	Logging      log.Level         `toml:"logging"`
-	Timeout      duration.Duration `toml:"timeout"`
-	Interval     duration.Duration `toml:"interval"`
-	Admins       []*model.JID      `toml:"admins"`
-	Client       struct {
+	TLSDir         string            `toml:"tlsdir"`
+	AccountsPath   string            `toml:"accounts_path"`
+	OutputPath     string            `toml:"output_path"`
+	Logging        log.Level         `toml:"logging"`
+	LoggingClients log.Level         `toml:"logging_clients"`
+	LoggingBots    log.Level         `toml:"logging_bots"`
+	Timeout        duration.Duration `toml:"timeout"`
+	Interval       duration.Duration `toml:"interval"`
+	Admins         []*model.JID      `toml:"admins"`
+	Client         struct {
 		JID      *model.JID `toml:"jid"`
 		Password string     `toml:"password"`
 	} `toml:"client"`

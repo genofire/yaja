@@ -9,8 +9,13 @@ import (
 )
 
 func (t *Tester) StartBot(status *Status) {
+	logger := log.New()
+	logger.SetLevel(t.LoggingBots)
+	logCTX := logger.WithFields(log.Fields{
+		"type": "bot",
+		"jid":  status.client.JID.Full(),
+	})
 	for {
-		logCTX := log.WithField("jid", status.client.JID.Full())
 
 		element, err := status.client.Read()
 		if err != nil {
@@ -21,7 +26,7 @@ func (t *Tester) StartBot(status *Status) {
 		}
 
 		errMSG := &messages.StreamError{}
-		err = status.client.In.DecodeElement(errMSG, element)
+		err = status.client.Decode(errMSG, element)
 		if err == nil {
 			logCTX.Errorf("recv stream error: %s: %s", errMSG.Text, messages.XMLChildrenString(errMSG.Any))
 			status.client.Close()
@@ -30,14 +35,14 @@ func (t *Tester) StartBot(status *Status) {
 		}
 
 		iq := &messages.IQClient{}
-		err = status.client.In.DecodeElement(iq, element)
+		err = status.client.Decode(iq, element)
 		if err == nil {
 			if iq.Ping != nil {
 				logCTX.Debug("answer ping")
 				iq.Type = messages.IQTypeResult
 				iq.To = iq.From
 				iq.From = status.client.JID
-				status.client.Out.Encode(iq)
+				status.client.Send(iq)
 			} else {
 				logCTX.Warnf("recv iq unsupport: %s", messages.XMLChildrenString(iq))
 			}
@@ -45,7 +50,7 @@ func (t *Tester) StartBot(status *Status) {
 		}
 
 		pres := &messages.PresenceClient{}
-		err = status.client.In.DecodeElement(pres, element)
+		err = status.client.Decode(pres, element)
 		if err == nil {
 			sender := pres.From
 			logPres := logCTX.WithField("from", sender.Full())
@@ -54,12 +59,12 @@ func (t *Tester) StartBot(status *Status) {
 				pres.Type = messages.PresenceTypeSubscribed
 				pres.To = sender
 				pres.From = nil
-				status.client.Out.Encode(pres)
+				status.client.Send(pres)
 				logPres.Debugf("accept new subscribe")
 
 				pres.Type = messages.PresenceTypeSubscribe
 				pres.ID = ""
-				status.client.Out.Encode(pres)
+				status.client.Send(pres)
 				logPres.Info("request also subscribe")
 			} else if pres.Type == messages.PresenceTypeSubscribed {
 				logPres.Info("recv presence accepted subscribe")
@@ -76,7 +81,7 @@ func (t *Tester) StartBot(status *Status) {
 		}
 
 		msg := &messages.MessageClient{}
-		err = status.client.In.DecodeElement(msg, element)
+		err = status.client.Decode(msg, element)
 		if err != nil {
 			logCTX.Warnf("unsupport xml recv: %s <-> %v", err, element)
 			continue
@@ -99,6 +104,30 @@ func (t *Tester) StartBot(status *Status) {
 
 		case "ping":
 			status.client.Send(messages.MessageClient{Type: msg.Type, To: msg.From, Body: "pong"})
+
+		case "disconnect":
+			first := true
+			allAdmins := ""
+			isAdmin := false
+			for _, jid := range t.Admins {
+				if first {
+					first = false
+				} else {
+					allAdmins += ", "
+				}
+				allAdmins += jid.Bare()
+				if jid.Bare() == msg.From.Bare() {
+					isAdmin = true
+					status.client.Send(messages.MessageClient{Type: msg.Type, To: jid, Body: "last message, disconnect requested by " + msg.From.Bare()})
+
+				}
+			}
+			if isAdmin {
+				status.Login = false
+				status.client.Close()
+				return
+			}
+			status.client.Send(messages.MessageClient{Type: msg.Type, To: msg.From, Body: "not allowed, ask " + allAdmins})
 
 		case "checkmsg":
 			if len(msgText) == 2 {

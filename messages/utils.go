@@ -17,6 +17,18 @@ type XMLElement struct {
 	InnerXML string `xml:",innerxml"`
 }
 
+func XMLStartElementToString(element *xml.StartElement) string {
+	if element == nil {
+		return "<nil>"
+	}
+	debug := fmt.Sprintf("<%s xmlns=\"%s\"", element.Name.Local, element.Name.Space)
+	for _, attr := range element.Attr {
+		debug = fmt.Sprintf("%s %s=\"%s\"", debug, attr.Name, attr.Value)
+	}
+	debug += ">"
+	return debug
+}
+
 func XMLChildrenString(o interface{}) (result string) {
 	first := true
 	val := reflect.ValueOf(o)

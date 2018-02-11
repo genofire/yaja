@@ -38,16 +38,26 @@ func (s *Status) Update(timeout time.Duration) {
 		return
 	}
 
-	bareJID := model.NewJID(s.account.JID.Bare())
-	if client, err := client.NewClientProtocolDuration(bareJID, s.account.Password, "tcp4", timeout/2); err == nil {
+	c := &client.Client{
+		JID:      model.NewJID(s.account.JID.Bare()),
+		Protocol: "tcp4",
+		Logging:  s.client.Logging,
+		Timeout:  timeout / 2,
+	}
+
+	if err := c.Connect(s.account.Password); err == nil {
 		s.IPv4 = true
-		client.Close()
+		c.Close()
 	} else {
 		s.IPv4 = false
 	}
-	if client, err := client.NewClientProtocolDuration(bareJID, s.account.Password, "tcp6", timeout/2); err == nil {
+
+	c.JID = model.NewJID(s.account.JID.Bare())
+	c.Protocol = "tcp6"
+
+	if err := c.Connect(s.account.Password); err == nil {
 		s.IPv6 = true
-		client.Close()
+		c.Close()
 	} else {
 		s.IPv6 = false
 	}

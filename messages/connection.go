@@ -11,7 +11,7 @@ type StreamFeatures struct {
 	XMLName    xml.Name `xml:"http://etherx.jabber.org/streams features"`
 	StartTLS   *TLSStartTLS
 	Mechanisms SASLMechanisms
-	Bind       Bind
+	Bind       *Bind
 	Session    bool
 }
 

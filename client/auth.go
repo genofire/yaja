@@ -22,6 +22,7 @@ func (client *Client) auth(password string) error {
 	challenge := &messages.SASLChallenge{}
 	response := &messages.SASLResponse{}
 	for _, m := range f.Mechanisms.Mechanism {
+		client.Logging.Debugf("try auth with '%s'", m)
 		if m == "SCRAM-SHA-1" {
 			/*
 				mechanism = m
@@ -33,10 +34,10 @@ func (client *Client) auth(password string) error {
 		if m == "DIGEST-MD5" {
 			mechanism = m
 			// Digest-MD5 authentication
-			client.Out.Encode(&messages.SASLAuth{
+			client.Send(&messages.SASLAuth{
 				Mechanism: m,
 			})
-			if err := client.ReadElement(challenge); err != nil {
+			if err := client.ReadDecode(challenge); err != nil {
 				return err
 			}
 			b, err := base64.StdEncoding.DecodeString(challenge.Body)
@@ -65,7 +66,7 @@ func (client *Client) auth(password string) error {
 				"\", nc=" + nonceCount + ", qop=" + qop + ", digest-uri=\"" + digestURI + "\", response=" + digest + ", charset=" + charset
 
 			response.Body = base64.StdEncoding.EncodeToString([]byte(message))
-			client.Out.Encode(response)
+			client.Send(response)
 			break
 		}
 		if m == "PLAIN" {
@@ -74,7 +75,7 @@ func (client *Client) auth(password string) error {
 			raw := "\x00" + client.JID.Local + "\x00" + password
 			enc := make([]byte, base64.StdEncoding.EncodedLen(len(raw)))
 			base64.StdEncoding.Encode(enc, []byte(raw))
-			client.Out.Encode(&messages.SASLAuth{
+			client.Send(&messages.SASLAuth{
 				Mechanism: "PLAIN",
 				Body:      string(enc),
 			})
@@ -85,15 +86,17 @@ func (client *Client) auth(password string) error {
 	if mechanism == "" {
 		return fmt.Errorf("PLAIN authentication is not an option: %s", f.Mechanisms.Mechanism)
 	}
+	client.Logging.Info("used auth with '%s'", mechanism)
+
 	element, err := client.Read()
 	if err != nil {
 		return err
 	}
 	fail := messages.SASLFailure{}
-	if err := client.In.DecodeElement(&fail, element); err == nil {
+	if err := client.Decode(&fail, element); err == nil {
 		return errors.New(messages.XMLChildrenString(fail) + " : " + fail.Body)
 	}
-	if err := client.In.DecodeElement(&messages.SASLSuccess{}, element); err != nil {
+	if err := client.Decode(&messages.SASLSuccess{}, element); err != nil {
 		return errors.New("auth failed - with unexpected answer")
 	}
 	return nil

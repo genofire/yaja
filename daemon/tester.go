@@ -38,8 +38,18 @@ var TesterCMD = &cobra.Command{
 		if err := file.ReadJSON(configTester.AccountsPath, testerInstance); err != nil {
 			log.Warn("unable to load state file:", err)
 		}
+		testerInstance.Admins = configTester.Admins
+		testerInstance.LoggingBots = configTester.LoggingBots
+		clientLogger := log.New()
+		clientLogger.SetLevel(configTester.LoggingClients)
+		testerInstance.LoggingClients = clientLogger
 
-		mainClient, err := client.NewClientProtocolDuration(configTester.Client.JID, configTester.Client.Password, "tcp", configTester.Timeout.Duration)
+		mainClient := &client.Client{
+			JID:     configTester.Client.JID,
+			Timeout: configTester.Timeout.Duration,
+			Logging: clientLogger,
+		}
+		err := mainClient.Connect(configTester.Client.Password)
 		if err != nil {
 			log.Fatal("unable to connect with main jabber client: ", err)
 		}
