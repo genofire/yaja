@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/model"
 )
 
 func (t *Tester) StartBot(status *Status) {
@@ -99,12 +100,17 @@ func (t *Tester) StartBot(status *Status) {
 
 		case "ping":
 			status.client.Send(messages.MessageClient{Type: msg.Type, To: msg.From, Body: "pong"})
-
+		case "admin":
+			if len(msgText) == 2 {
+				botAdmin(strings.SplitN(msgText[1], " ", 2), logCTX, status, msg.From, botAllowed(t.Admins, status.account.Admins))
+			} else {
+				status.client.Send(messages.MessageClient{Type: msg.Type, To: msg.From, Body: "list, add JID-BARE, del JID-BARE"})
+			}
 		case "disconnect":
 			first := true
 			allAdmins := ""
 			isAdmin := false
-			for _, jid := range append(t.Admins, status.account.Admins...) {
+			for _, jid := range botAllowed(t.Admins, status.account.Admins) {
 				if first {
 					first = false
 					allAdmins += jid.Bare()
@@ -134,4 +140,50 @@ func (t *Tester) StartBot(status *Status) {
 			logCTX.Debug("undetect")
 		}
 	}
+}
+func botAllowed(list []*model.JID, toConvert map[string]interface{}) []*model.JID {
+	alist := list
+	for jid, _ := range toConvert {
+		alist = append(alist, model.NewJID(jid))
+	}
+	return alist
+}
+
+func botAdmin(cmd []string, log *log.Entry, status *Status, from *model.JID, allowed []*model.JID) {
+	msg := ""
+	if len(cmd) == 2 {
+		isAdmin := false
+		for _, jid := range allowed {
+			if jid.Bare() == from.Bare() {
+				isAdmin = true
+			}
+		}
+		if status.account.Admins == nil {
+			status.account.Admins = make(map[string]interface{})
+		}
+		if !isAdmin {
+			msg = "not allowed"
+		} else if cmd[0] == "add" {
+			status.account.Admins[cmd[1]] = true
+			msg = "ack"
+		} else if cmd[0] == "del" {
+			delete(status.account.Admins, cmd[1])
+			msg = "ack"
+		} else {
+			msg = "unkown command"
+		}
+	} else {
+		if len(cmd) == 1 && cmd[0] == "list" {
+			for jid, _ := range status.account.Admins {
+				if msg == "" {
+					msg += "admins are: " + jid
+				} else {
+					msg += ", " + jid
+				}
+			}
+		} else {
+			msg = "unkown command"
+		}
+	}
+	status.client.Send(messages.MessageClient{Type: messages.MessageTypeChat, To: from, Body: msg})
 }
