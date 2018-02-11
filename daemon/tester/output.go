@@ -33,7 +33,9 @@ func (t *Tester) Output() *Output {
 
 	for from, status := range t.Status {
 		output.Status = append(output.Status, status)
-
+		if !status.Login {
+			continue
+		}
 		for to, linkOK := range status.Connections {
 			var key string
 			// keep source and target in the same order
