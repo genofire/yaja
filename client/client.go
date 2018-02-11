@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/model"
@@ -23,6 +24,10 @@ type Client struct {
 }
 
 func NewClient(jid *model.JID, password string) (*Client, error) {
+	return NewClientProtocolDuration(jid, password, "tcp", -1)
+}
+
+func NewClientProtocolDuration(jid *model.JID, password string, proto string, timeout time.Duration) (*Client, error) {
 	_, srvEntries, err := net.LookupSRV("xmpp-client", "tcp", jid.Domain)
 	addr := jid.Domain + ":5222"
 	if err == nil && len(srvEntries) > 0 {
@@ -38,7 +43,12 @@ func NewClient(jid *model.JID, password string) (*Client, error) {
 	if len(a) == 1 {
 		addr += ":5222"
 	}
-	conn, err := net.Dial("tcp", addr)
+	var conn net.Conn
+	if timeout >= 0 {
+		conn, err = net.DialTimeout(proto, addr, timeout)
+	} else {
+		conn, err = net.Dial(proto, addr)
+	}
 	if err != nil {
 		return nil, err
 	}

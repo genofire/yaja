@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -40,7 +39,7 @@ var TesterCMD = &cobra.Command{
 			log.Warn("unable to load state file:", err)
 		}
 
-		mainClient, err := client.NewClient(configTester.Client.JID, configTester.Client.Password)
+		mainClient, err := client.NewClientProtocolDuration(configTester.Client.JID, configTester.Client.Password, "tcp", configTester.Timeout.Duration)
 		if err != nil {
 			log.Fatal("unable to connect with main jabber client: ", err)
 		}
@@ -53,10 +52,10 @@ var TesterCMD = &cobra.Command{
 				Body: "yaja tester starts",
 			})
 		}
-
+		testerInstance.Timeout = configTester.Timeout.Duration
 		testerInstance.Start(mainClient, configTester.Client.Password)
 		testerInstance.CheckStatus()
-		testerWorker = worker.NewWorker(time.Minute, func() {
+		testerWorker = worker.NewWorker(configTester.Interval.Duration, func() {
 			testerInstance.CheckStatus()
 			file.SaveJSON(configTester.AccountsPath, testerInstance)
 			file.SaveJSON(configTester.OutputPath, testerInstance.Output())

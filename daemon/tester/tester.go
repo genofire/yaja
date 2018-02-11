@@ -1,6 +1,8 @@
 package tester
 
 import (
+	"time"
+
 	log "github.com/sirupsen/logrus"
 
 	"dev.sum7.eu/genofire/yaja/client"
@@ -11,6 +13,7 @@ import (
 
 type Tester struct {
 	mainClient *client.Client
+	Timeout    time.Duration       `json:"-"`
 	Accounts   map[string]*Account `json:"accounts"`
 	Status     map[string]*Status  `json:"-"`
 }
@@ -61,7 +64,7 @@ func (t *Tester) Connect(acc *Account) {
 		logCTX.Warn("is already loggedin")
 		return
 	}
-	c, err := client.NewClient(acc.JID, acc.Password)
+	c, err := client.NewClientProtocolDuration(acc.JID, acc.Password, "tcp", t.Timeout)
 	if err != nil {
 		logCTX.Warnf("could not connect client: %s", err)
 	} else {
