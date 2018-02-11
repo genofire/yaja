@@ -149,7 +149,7 @@ func (client *Client) connect(password string) error {
 	if err := client.ReadElement(&iq); err != nil {
 		return err
 	}
-	if &iq.Bind == nil {
+	if iq.Bind == nil {
 		return errors.New("<iq> result missing <bind>")
 	}
 	if iq.Bind.JID != nil {
@@ -160,7 +160,7 @@ func (client *Client) connect(password string) error {
 		return errors.New(fmt.Sprintf("%v", iq.Other))
 	}
 	// set status
-	client.Send(&messages.PresenceClient{Show: "online", Status: "yaja client"})
+	client.Send(&messages.PresenceClient{Show: messages.ShowTypeXA, Status: "online"})
 
 	return err
 }

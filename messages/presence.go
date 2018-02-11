@@ -27,6 +27,15 @@ const (
 	PresenceTypeError        PresenceType = "error"
 )
 
+type ShowType string
+
+const (
+	ShowTypeAway ShowType = "away"
+	ShowTypeChat ShowType = "chat"
+	ShowTypeDND  ShowType = "dnd"
+	ShowTypeXA   ShowType = "xa"
+)
+
 // PresenceClient element
 type PresenceClient struct {
 	XMLName xml.Name     `xml:"jabber:client presence"`
@@ -36,9 +45,9 @@ type PresenceClient struct {
 	Type    PresenceType `xml:"type,attr,omitempty"`
 	Lang    string       `xml:"lang,attr,omitempty"`
 
-	Show     string `xml:"show,omitempty"`   // away, chat, dnd, xa
-	Status   string `xml:"status,omitempty"` // sb []clientText
-	Priority string `xml:"priority,omitempty"`
+	Show     ShowType `xml:"show,omitempty"`   // away, chat, dnd, xa
+	Status   string   `xml:"status,omitempty"` // sb []clientText
+	Priority string   `xml:"priority,omitempty"`
 	// Caps     *ClientCaps  `xml:"c"`
 	Delay *Delay `xml:"delay"`
 

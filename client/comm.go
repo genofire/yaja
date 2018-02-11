@@ -51,19 +51,25 @@ func (client *Client) Send(p interface{}) error {
 	msg, ok := p.(*messages.MessageClient)
 	if ok {
 		msg.From = client.JID
-		msg.ID = utils.CreateCookieString()
+		if msg.ID == "" {
+			msg.ID = utils.CreateCookieString()
+		}
 		return client.Out.Encode(msg)
 	}
 	iq, ok := p.(*messages.IQClient)
 	if ok {
 		iq.From = client.JID
-		iq.ID = utils.CreateCookieString()
+		if iq.ID == "" {
+			iq.ID = utils.CreateCookieString()
+		}
 		return client.Out.Encode(iq)
 	}
 	pc, ok := p.(*messages.PresenceClient)
 	if ok {
 		pc.From = client.JID
-		pc.ID = utils.CreateCookieString()
+		if pc.ID == "" {
+			pc.ID = utils.CreateCookieString()
+		}
 		return client.Out.Encode(pc)
 	}
 	return client.Out.Encode(p)

@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/server/utils"
 )
 
 func (t *Tester) StartBot(status *Status) {
@@ -47,11 +48,26 @@ func (t *Tester) StartBot(status *Status) {
 		pres := &messages.PresenceClient{}
 		err = status.client.In.DecodeElement(pres, element)
 		if err == nil {
+			sender := pres.From
+			logPres := logCTX.WithField("from", sender.Full())
 			if pres.Type == messages.PresenceTypeSubscribe {
+				logPres.Debugf("recv subscribe")
 				pres.Type = messages.PresenceTypeSubscribed
-				pres.To = pres.From
-				status.client.Send(pres)
-				logCTX.WithField("from", pres.From.Full()).Info("accept new subscribe")
+				pres.To = sender
+				pres.From = nil
+				status.client.Out.Encode(pres)
+				logPres.Debugf("accept new subscribe")
+
+				pres.Type = messages.PresenceTypeSubscribe
+				pres.ID = utils.CreateCookieString()
+				status.client.Out.Encode(pres)
+				logPres.Info("request also subscribe")
+			} else if pres.Type == messages.PresenceTypeSubscribed {
+				logPres.Info("recv accepted subscribe")
+			} else if pres.Type == messages.PresenceTypeUnsubscribe {
+				logPres.Info("recv remove subscribe")
+			} else if pres.Type == messages.PresenceTypeUnsubscribed {
+				logPres.Info("recv removed subscribe")
 			} else {
 				logCTX.Warnf("unsupported presence recv: %v", pres)
 			}
