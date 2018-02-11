@@ -1,6 +1,7 @@
 package tester
 
 import (
+	"fmt"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -19,18 +20,14 @@ func (t *Tester) StartBot(status *Status) {
 
 		element, err := status.client.Read()
 		if err != nil {
-			logCTX.Errorf("read client %s", err)
-			status.client.Close()
-			status.Login = false
+			status.Disconnect(fmt.Sprintf("could not read any more data from socket: %s", err))
 			return
 		}
 
 		errMSG := &messages.StreamError{}
 		err = status.client.Decode(errMSG, element)
 		if err == nil {
-			logCTX.Errorf("recv stream error: %s: %s", errMSG.Text, messages.XMLChildrenString(errMSG.Any))
-			status.client.Close()
-			status.Login = false
+			status.Disconnect(fmt.Sprintf("recv stream error: %s: %s", errMSG.Text, messages.XMLChildrenString(errMSG.Any)))
 			return
 		}
 
@@ -89,9 +86,7 @@ func (t *Tester) StartBot(status *Status) {
 		logCTX = logCTX.WithField("from", msg.From.Full()).WithField("msg-recv", msg.Body)
 		if msg.Error != nil {
 			if msg.Error.Type == "auth" {
-				logCTX.Warnf("recv msg with error not auth")
-				status.Login = false
-				status.client.Close()
+				status.Disconnect("recv msg with error not auth")
 				return
 			}
 			logCTX.Debugf("recv msg with error %s[%s]: %s -> %s -> %s", msg.Error.Code, msg.Error.Type, msg.Error.Text, messages.XMLChildrenString(msg.Error.StanzaErrorGroup), messages.XMLChildrenString(msg.Error.Other))
@@ -109,7 +104,7 @@ func (t *Tester) StartBot(status *Status) {
 			first := true
 			allAdmins := ""
 			isAdmin := false
-			for _, jid := range t.Admins {
+			for _, jid := range append(t.Admins, status.account.Admins...) {
 				if first {
 					first = false
 					allAdmins += jid.Bare()
@@ -123,8 +118,7 @@ func (t *Tester) StartBot(status *Status) {
 				}
 			}
 			if isAdmin {
-				status.Login = false
-				status.client.Close()
+				status.Disconnect(fmt.Sprintf("disconnect by admin '%s'", msg.From.Bare()))
 				return
 			}
 			status.client.Send(messages.MessageClient{Type: msg.Type, To: msg.From, Body: "not allowed, ask " + allAdmins})

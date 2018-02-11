@@ -2,13 +2,16 @@ package tester
 
 import (
 	"crypto/tls"
+	"fmt"
 	"time"
 
 	"dev.sum7.eu/genofire/yaja/client"
+	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/model"
 )
 
 type Status struct {
+	backupClient         *client.Client
 	client               *client.Client
 	account              *Account
 	JID                  *model.JID        `json:"jid"`
@@ -21,8 +24,9 @@ type Status struct {
 	IPv6                 bool              `json:"ipv6"`
 }
 
-func NewStatus(acc *Account) *Status {
+func NewStatus(backupClient *client.Client, acc *Account) *Status {
 	return &Status{
+		backupClient:         backupClient,
 		account:              acc,
 		JID:                  acc.JID,
 		Domain:               acc.JID.Domain,
@@ -30,11 +34,26 @@ func NewStatus(acc *Account) *Status {
 		Connections:          make(map[string]bool),
 	}
 }
+func (s *Status) Disconnect(reason string) {
+	if s.Login {
+		msg := &messages.MessageClient{
+			Body: fmt.Sprintf("you recieve a notify that '%s' disconnect: %s", s.JID.Full(), reason),
+		}
+		for _, jid := range s.account.Admins {
+			msg.To = jid
+			if err := s.backupClient.Send(msg); err != nil {
+				s.client.Send(msg)
+			}
+		}
+	}
+	s.client.Logging.Warn(reason)
+	s.client.Close()
+	s.Login = false
+	s.TLSVersion = ""
+}
 
 func (s *Status) Update(timeout time.Duration) {
 	if s.client == nil || !s.Login {
-		s.Login = false
-		s.TLSVersion = ""
 		return
 	}
 
@@ -62,9 +81,7 @@ func (s *Status) Update(timeout time.Duration) {
 		s.IPv6 = false
 	}
 	if !s.IPv4 && !s.IPv6 {
-		s.client.Close()
-		s.Login = false
-		s.TLSVersion = ""
+		s.Disconnect("check of ipv4 and ipv6 failed -> client should not be connected anymore")
 	}
 
 	if tlsstate := s.client.TLSConnectionState(); tlsstate != nil {

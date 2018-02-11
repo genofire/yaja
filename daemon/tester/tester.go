@@ -33,7 +33,7 @@ func (t *Tester) Start(mainClient *client.Client, password string) {
 
 	t.mainClient = mainClient
 
-	status := NewStatus(&Account{
+	status := NewStatus(mainClient, &Account{
 		JID:      mainClient.JID,
 		Password: password,
 	})
@@ -53,8 +53,7 @@ func (t *Tester) Start(mainClient *client.Client, password string) {
 }
 func (t *Tester) Close() {
 	for _, s := range t.Status {
-		s.Login = false
-		s.client.Close()
+		s.Disconnect("yaja tester stopped")
 	}
 }
 
@@ -62,7 +61,7 @@ func (t *Tester) Connect(acc *Account) {
 	logCTX := log.WithField("jid", acc.JID.Full())
 	status, ok := t.Status[acc.JID.Bare()]
 	if !ok {
-		status = NewStatus(acc)
+		status = NewStatus(t.mainClient, acc)
 		t.Status[acc.JID.Bare()] = status
 	} else if status.JID == nil {
 		status.JID = acc.JID
