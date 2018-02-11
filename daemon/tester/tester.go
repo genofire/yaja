@@ -1,6 +1,7 @@
 package tester
 
 import (
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -16,6 +17,7 @@ type Tester struct {
 	Timeout    time.Duration       `json:"-"`
 	Accounts   map[string]*Account `json:"accounts"`
 	Status     map[string]*Status  `json:"-"`
+	mux        sync.Mutex
 }
 
 func NewTester() *Tester {
@@ -35,9 +37,12 @@ func (t *Tester) Start(mainClient *client.Client, password string) {
 	})
 	status.client = mainClient
 	status.Login = true
-	status.Update()
+	status.Update(t.Timeout)
 
-	t.Status[mainClient.JID.Domain] = status
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
+	t.Status[mainClient.JID.Bare()] = status
 	go t.StartBot(status)
 
 	for _, acc := range t.Accounts {
@@ -73,26 +78,29 @@ func (t *Tester) Connect(acc *Account) {
 		status.client = c
 		status.account.JID = c.JID
 		status.JID = c.JID
-		status.Update()
+		status.Update(t.Timeout)
 		go t.StartBot(status)
 	}
 }
 
 func (t *Tester) UpdateConnectionStatus(from, to *model.JID, recvmsg string) {
 	logCTX := log.WithFields(log.Fields{
-		"jid":     to.Full(),
-		"from":    from.Full(),
-		"recvmsg": recvmsg,
+		"jid":      to.Full(),
+		"from":     from.Full(),
+		"msg-recv": recvmsg,
 	})
+
+	t.mux.Lock()
+	defer t.mux.Unlock()
 
 	status, ok := t.Status[from.Bare()]
 	if !ok {
-		logCTX.Warn("recv wrong msg")
+		logCTX.Warn("recv msg without receiver")
 		return
 	}
 	msg, ok := status.MessageForConnection[to.Bare()]
-	logCTX = logCTX.WithField("msg", msg)
-	if !ok || msg != recvmsg {
+	logCTX = logCTX.WithField("msg-send", msg)
+	if !ok || msg != recvmsg || msg == "" || recvmsg == "" {
 		logCTX.Warn("recv wrong msg")
 		return
 	}
@@ -106,6 +114,10 @@ func (t *Tester) CheckStatus() {
 	send := 0
 	online := 0
 	connection := 0
+
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
 	for ownJID, own := range t.Status {
 		logCTX := log.WithField("jid", ownJID)
 		if !own.Login {
@@ -129,7 +141,7 @@ func (t *Tester) CheckStatus() {
 			}
 			msg, ok := own.MessageForConnection[jid]
 			if ok {
-				logCTXTo = logCTXTo.WithField("old-msg", msg)
+				logCTXTo = logCTXTo.WithField("msg-old", msg)
 				own.Connections[jid] = false
 				if ok, exists := own.Connections[jid]; !exists || ok {
 					logCTXTo.Warn("could not recv msg")
@@ -138,18 +150,19 @@ func (t *Tester) CheckStatus() {
 				}
 			}
 			msg = utils.CreateCookieString()
-			logCTXTo = logCTXTo.WithField("msg", msg)
+			logCTXTo = logCTXTo.WithField("msg-send", msg)
 
 			own.client.Send(&messages.MessageClient{
 				Body: "checkmsg " + msg,
 				Type: messages.ChatTypeChat,
 				To:   s.JID,
 			})
-			own.MessageForConnection[jid] = msg
+			own.MessageForConnection[s.JID.Bare()] = msg
 			logCTXTo.Info("test send")
 			send++
 		}
 	}
+
 	log.WithFields(log.Fields{
 		"online":     online,
 		"connection": connection,

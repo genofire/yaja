@@ -4,7 +4,7 @@ import "encoding/xml"
 
 type StreamError struct {
 	XMLName xml.Name `xml:"http://etherx.jabber.org/streams error"`
-	Text    string
+	Text    string   `xml:"urn:ietf:params:xml:ns:xmpp-streams text"`
 
 	Any xml.Name `xml:",any"`
 }

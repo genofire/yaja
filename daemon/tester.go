@@ -73,6 +73,7 @@ var TesterCMD = &cobra.Command{
 			switch sig {
 			case syscall.SIGTERM:
 				log.Panic("terminated")
+				quitTester()
 				os.Exit(0)
 			case syscall.SIGQUIT:
 				quitTester()

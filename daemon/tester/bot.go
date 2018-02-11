@@ -20,6 +20,15 @@ func (t *Tester) StartBot(status *Status) {
 			return
 		}
 
+		errMSG := &messages.StreamError{}
+		err = status.client.In.DecodeElement(errMSG, element)
+		if err == nil {
+			logCTX.Errorf("recv stream error: %s: %v", errMSG.Text, errMSG.Any)
+			status.client.Close()
+			status.Login = false
+			return
+		}
+
 		iq := &messages.IQClient{}
 		err = status.client.In.DecodeElement(iq, element)
 		if err == nil {
@@ -52,10 +61,10 @@ func (t *Tester) StartBot(status *Status) {
 		msg := &messages.MessageClient{}
 		err = status.client.In.DecodeElement(msg, element)
 		if err != nil {
-			logCTX.Warnf("unsupport xml recv: %s", err)
+			logCTX.Warnf("unsupport xml recv: %s <-> %v", err, element)
 			continue
 		}
-		logCTX = logCTX.WithField("from", msg.From.Full()).WithField("msg", msg.Body)
+		logCTX = logCTX.WithField("from", msg.From.Full()).WithField("msg-recv", msg.Body)
 		if msg.Error != nil {
 			logCTX.Debugf("recv msg with error %s: %s", msg.Error.Code, msg.Error.Text)
 			continue
