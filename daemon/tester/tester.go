@@ -9,7 +9,6 @@ import (
 	"dev.sum7.eu/genofire/yaja/client"
 	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/model"
-	"dev.sum7.eu/genofire/yaja/server/utils"
 )
 
 type Tester struct {
@@ -149,12 +148,12 @@ func (t *Tester) CheckStatus() {
 					logCTXTo.Debug("could not recv msg")
 				}
 			}
-			msg = utils.CreateCookieString()
+			msg = messages.CreateCookieString()
 			logCTXTo = logCTXTo.WithField("msg-send", msg)
 
 			own.client.Send(&messages.MessageClient{
 				Body: "checkmsg " + msg,
-				Type: messages.ChatTypeChat,
+				Type: messages.MessageTypeChat,
 				To:   s.JID,
 			})
 			own.MessageForConnection[s.JID.Bare()] = msg

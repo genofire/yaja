@@ -51,7 +51,7 @@ func (iex IQExtensions) Process(element *xml.StartElement, client *utils.Client)
 
 	// not extensions found
 	if count != 1 {
-		log.Debugf("%s - %s: %v", msg.XMLName.Space, msg.Type, msg.Other)
+		log.Debugf("%s - %s: %s", msg.XMLName.Space, msg.Type, messages.XMLChildrenString(msg.Other))
 	}
 
 	return true

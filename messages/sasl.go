@@ -1,6 +1,14 @@
 package messages
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+)
+
+// RFC 3920  C.4  SASL name space
+type SASLMechanisms struct {
+	XMLName   xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl mechanisms"`
+	Mechanism []string `xml:"mechanism"`
+}
 
 // SASLAuth element
 type SASLAuth struct {
@@ -9,8 +17,44 @@ type SASLAuth struct {
 	Body      string   `xml:",chardata"`
 }
 
-// RFC 3920  C.4  SASL name space
-type SASLMechanisms struct {
-	XMLName   xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl mechanisms"`
-	Mechanism []string `xml:"mechanism"`
+// SASLChallenge element
+type SASLChallenge struct {
+	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl challenge"`
+	Body    string   `xml:",chardata"`
+}
+
+// SASLResponse element
+type SASLResponse struct {
+	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl response"`
+	Body    string   `xml:",chardata"`
+}
+
+// SASLSuccess element
+type SASLSuccess struct {
+	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl success"`
+	Body    string   `xml:",chardata"`
+}
+
+// SASLAbout element
+type SASLAbout struct {
+	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl abort"`
+}
+
+// SASLFailure element
+type SASLFailure struct {
+	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl failure"`
+
+	Aborted              *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl aborted"`
+	AccountDisabled      *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl account-disabled"`
+	CredentialsExpired   *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl credentials-expired"`
+	EncryptionRequired   *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl encryption-required"`
+	IncorrectEncoding    *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl incorrect-encoding"`
+	InvalidAuthzid       *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl invalid-authzid"`
+	InvalidMechanism     *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl invalid-mechanism"`
+	MalformedRequest     *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl malformed-request"`
+	MechanismTooWeak     *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl mechanism-too-weak"`
+	NotAuthorized        *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl not-authorized"`
+	TemporaryAuthFailure *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl temporary-auth-failure"`
+
+	Body string `xml:",chardata"`
 }

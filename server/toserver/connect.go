@@ -97,7 +97,7 @@ func (state *TLSStream) Process() state.State {
 			</mechanisms>
 			<bidi xmlns='urn:xmpp:features:bidi'/>
 		</stream:features>`,
-		utils.CreateCookie(), messages.NSClient, messages.NSStream,
+		messages.CreateCookie(), messages.NSClient, messages.NSStream,
 		messages.NSSASL)
 
 	return state.Next

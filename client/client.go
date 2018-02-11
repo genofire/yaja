@@ -11,7 +11,6 @@ import (
 
 	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/model"
-	"dev.sum7.eu/genofire/yaja/server/utils"
 )
 
 // Client holds XMPP connection opitons
@@ -24,7 +23,7 @@ type Client struct {
 }
 
 func NewClient(jid *model.JID, password string) (*Client, error) {
-	return NewClientProtocolDuration(jid, password, "tcp", -1)
+	return NewClientProtocolDuration(jid, password, "tcp", 0)
 }
 
 func NewClientProtocolDuration(jid *model.JID, password string, proto string, timeout time.Duration) (*Client, error) {
@@ -43,12 +42,7 @@ func NewClientProtocolDuration(jid *model.JID, password string, proto string, ti
 	if len(a) == 1 {
 		addr += ":5222"
 	}
-	var conn net.Conn
-	if timeout >= 0 {
-		conn, err = net.DialTimeout(proto, addr, timeout)
-	} else {
-		conn, err = net.Dial(proto, addr)
-	}
+	conn, err := net.DialTimeout(proto, addr, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -124,12 +118,11 @@ func (client *Client) connect(password string) error {
 	if err := tlsconn.VerifyHostname(client.JID.Domain); err != nil {
 		return err
 	}
-	err := client.auth(password)
-	if err != nil {
+	if err := client.auth(password); err != nil {
 		return err
 	}
-	_, err = client.startStream()
-	if err != nil {
+
+	if _, err := client.startStream(); err != nil {
 		return err
 	}
 	// bind to resource
@@ -137,23 +130,22 @@ func (client *Client) connect(password string) error {
 	if client.JID.Resource != "" {
 		bind.Resource = client.JID.Resource
 	}
-	client.Out.Encode(&messages.IQClient{
+	if err := client.Out.Encode(&messages.IQClient{
 		Type: messages.IQTypeSet,
-		To:   model.NewJID(client.JID.Domain),
 		From: client.JID,
-		ID:   utils.CreateCookieString(),
+		To:   model.NewJID(client.JID.Domain),
 		Bind: bind,
-	})
+	}); err != nil {
+		return err
+	}
 
 	var iq messages.IQClient
 	if err := client.ReadElement(&iq); err != nil {
 		return err
 	}
 	if iq.Error != nil {
-		if iq.Error.Type == messages.ErrorClientTypeCancel && iq.Error.ServiceUnavailable != nil {
-			//TODO binding service unavailable
-		} else {
-			return errors.New(fmt.Sprintf("recv error on iq>bind: %s[%s]: %s -> %v", iq.Error.Code, iq.Error.Type, iq.Error.Text, iq.Error.Other))
+		if iq.Error.ServiceUnavailable == nil {
+			return errors.New(fmt.Sprintf("recv error on iq>bind: %s[%s]: %s -> %s -> %s", iq.Error.Code, iq.Error.Type, iq.Error.Text, messages.XMLChildrenString(iq.Error.StanzaErrorGroup), messages.XMLChildrenString(iq.Error.Other)))
 		}
 	} else if iq.Bind == nil {
 		return errors.New("<iq> result missing <bind>")
@@ -162,10 +154,8 @@ func (client *Client) connect(password string) error {
 		client.JID.Domain = iq.Bind.JID.Domain
 		client.JID.Resource = iq.Bind.JID.Resource
 	} else {
-		return errors.New(fmt.Sprintf("%v", iq.Other))
+		return errors.New(messages.XMLChildrenString(iq.Other))
 	}
 	// set status
-	err = client.Send(&messages.PresenceClient{Show: messages.ShowTypeXA, Status: "online"})
-
-	return err
+	return client.Send(&messages.PresenceClient{Show: messages.PresenceShowXA, Status: "online"})
 }

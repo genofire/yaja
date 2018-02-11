@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"dev.sum7.eu/genofire/yaja/messages"
-	"dev.sum7.eu/genofire/yaja/server/utils"
 )
 
 func (client *Client) Read() (*xml.StartElement, error) {
@@ -51,25 +50,16 @@ func (client *Client) Send(p interface{}) error {
 	msg, ok := p.(*messages.MessageClient)
 	if ok {
 		msg.From = client.JID
-		if msg.ID == "" {
-			msg.ID = utils.CreateCookieString()
-		}
 		return client.Out.Encode(msg)
 	}
 	iq, ok := p.(*messages.IQClient)
 	if ok {
 		iq.From = client.JID
-		if iq.ID == "" {
-			iq.ID = utils.CreateCookieString()
-		}
 		return client.Out.Encode(iq)
 	}
 	pc, ok := p.(*messages.PresenceClient)
 	if ok {
 		pc.From = client.JID
-		if pc.ID == "" {
-			pc.ID = utils.CreateCookieString()
-		}
 		return client.Out.Encode(pc)
 	}
 	return client.Out.Encode(p)

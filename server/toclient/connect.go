@@ -73,7 +73,7 @@ func (state *TLSStream) Process() state.State {
 					<mechanism>PLAIN</mechanism>
 				</mechanisms>
 			</stream:features>`,
-			utils.CreateCookie(), messages.NSClient, messages.NSStream,
+			messages.CreateCookie(), messages.NSClient, messages.NSStream,
 			messages.NSSASL, messages.NSFeaturesIQRegister)
 	} else {
 		fmt.Fprintf(state.Client.Conn, `<?xml version='1.0'?>
@@ -83,7 +83,7 @@ func (state *TLSStream) Process() state.State {
 					<mechanism>PLAIN</mechanism>
 				</mechanisms>
 			</stream:features>`,
-			utils.CreateCookie(), messages.NSClient, messages.NSStream,
+			messages.CreateCookie(), messages.NSClient, messages.NSStream,
 			messages.NSSASL)
 	}
 
@@ -174,7 +174,7 @@ func (state *AuthedStart) Process() state.State {
 					<required/>
 				</bind>
 			</stream:features>`,
-		messages.NSStream, state.Client.JID.Domain, utils.CreateCookie(), messages.NSClient,
+		messages.NSStream, state.Client.JID.Domain, messages.CreateCookie(), messages.NSClient,
 		messages.NSBind)
 
 	return state.Next

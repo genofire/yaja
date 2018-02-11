@@ -44,7 +44,7 @@ func (state *Start) Process() State {
 
 	fmt.Fprintf(state.Client.Conn, `<?xml version='1.0'?>
 		<stream:stream id='%x' version='1.0' xmlns='%s' xmlns:stream='%s'>`,
-		utils.CreateCookie(), messages.NSClient, messages.NSStream)
+		messages.CreateCookie(), messages.NSClient, messages.NSStream)
 
 	fmt.Fprintf(state.Client.Conn, `<stream:features>
 			<starttls xmlns='%s'>

@@ -6,7 +6,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"dev.sum7.eu/genofire/yaja/messages"
-	"dev.sum7.eu/genofire/yaja/server/utils"
 )
 
 func (t *Tester) StartBot(status *Status) {
@@ -24,7 +23,7 @@ func (t *Tester) StartBot(status *Status) {
 		errMSG := &messages.StreamError{}
 		err = status.client.In.DecodeElement(errMSG, element)
 		if err == nil {
-			logCTX.Errorf("recv stream error: %s: %v", errMSG.Text, errMSG.Any)
+			logCTX.Errorf("recv stream error: %s: %s", errMSG.Text, messages.XMLChildrenString(errMSG.Any))
 			status.client.Close()
 			status.Login = false
 			return
@@ -40,7 +39,7 @@ func (t *Tester) StartBot(status *Status) {
 				iq.From = status.client.JID
 				status.client.Out.Encode(iq)
 			} else {
-				logCTX.Warnf("unsupport iq recv: %v", iq)
+				logCTX.Warnf("recv iq unsupport: %s", messages.XMLChildrenString(iq))
 			}
 			continue
 		}
@@ -51,7 +50,7 @@ func (t *Tester) StartBot(status *Status) {
 			sender := pres.From
 			logPres := logCTX.WithField("from", sender.Full())
 			if pres.Type == messages.PresenceTypeSubscribe {
-				logPres.Debugf("recv subscribe")
+				logPres.Debugf("recv presence subscribe")
 				pres.Type = messages.PresenceTypeSubscribed
 				pres.To = sender
 				pres.From = nil
@@ -59,17 +58,19 @@ func (t *Tester) StartBot(status *Status) {
 				logPres.Debugf("accept new subscribe")
 
 				pres.Type = messages.PresenceTypeSubscribe
-				pres.ID = utils.CreateCookieString()
+				pres.ID = ""
 				status.client.Out.Encode(pres)
 				logPres.Info("request also subscribe")
 			} else if pres.Type == messages.PresenceTypeSubscribed {
-				logPres.Info("recv accepted subscribe")
+				logPres.Info("recv presence accepted subscribe")
 			} else if pres.Type == messages.PresenceTypeUnsubscribe {
-				logPres.Info("recv remove subscribe")
+				logPres.Info("recv presence remove subscribe")
 			} else if pres.Type == messages.PresenceTypeUnsubscribed {
-				logPres.Info("recv removed subscribe")
+				logPres.Info("recv presence removed subscribe")
+			} else if pres.Type == messages.PresenceTypeUnavailable {
+				logPres.Debug("recv presence unavailable")
 			} else {
-				logCTX.Warnf("unsupported presence recv: %v", pres)
+				logCTX.Warnf("recv presence unsupported: %s -> %s", pres.Type, messages.XMLChildrenString(pres))
 			}
 			continue
 		}
@@ -82,7 +83,13 @@ func (t *Tester) StartBot(status *Status) {
 		}
 		logCTX = logCTX.WithField("from", msg.From.Full()).WithField("msg-recv", msg.Body)
 		if msg.Error != nil {
-			logCTX.Debugf("recv msg with error %s[%s]: %s -> %v -> %v", msg.Error.Code, msg.Error.Type, msg.Error.Text, msg.Error.StanzaErrorGroup, msg.Error.Other)
+			if msg.Error.Type == "auth" {
+				logCTX.Warnf("recv msg with error not auth")
+				status.Login = false
+				status.client.Close()
+				return
+			}
+			logCTX.Debugf("recv msg with error %s[%s]: %s -> %s -> %s", msg.Error.Code, msg.Error.Type, msg.Error.Text, messages.XMLChildrenString(msg.Error.StanzaErrorGroup), messages.XMLChildrenString(msg.Error.Other))
 			continue
 
 		}

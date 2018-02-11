@@ -19,25 +19,27 @@ func (client *Client) auth(password string) error {
 	}
 	//auth:
 	mechanism := ""
+	challenge := &messages.SASLChallenge{}
+	response := &messages.SASLResponse{}
 	for _, m := range f.Mechanisms.Mechanism {
-		if m == "PLAIN" {
-			mechanism = m
-			// Plain authentication: send base64-encoded \x00 user \x00 password.
-			raw := "\x00" + client.JID.Local + "\x00" + password
-			enc := make([]byte, base64.StdEncoding.EncodedLen(len(raw)))
-			base64.StdEncoding.Encode(enc, []byte(raw))
-			fmt.Fprintf(client.conn, "<auth xmlns='%s' mechanism='PLAIN'>%s</auth>\n", messages.NSSASL, enc)
-			break
+		if m == "SCRAM-SHA-1" {
+			/*
+				mechanism = m
+				TODO
+				break
+			*/
 		}
+
 		if m == "DIGEST-MD5" {
 			mechanism = m
 			// Digest-MD5 authentication
-			fmt.Fprintf(client.conn, "<auth xmlns='%s' mechanism='DIGEST-MD5'/>\n", messages.NSSASL)
-			var ch string
-			if err := client.ReadElement(&ch); err != nil {
+			client.Out.Encode(&messages.SASLAuth{
+				Mechanism: m,
+			})
+			if err := client.ReadElement(challenge); err != nil {
 				return err
 			}
-			b, err := base64.StdEncoding.DecodeString(string(ch))
+			b, err := base64.StdEncoding.DecodeString(challenge.Body)
 			if err != nil {
 				return err
 			}
@@ -62,29 +64,37 @@ func (client *Client) auth(password string) error {
 			message := "username=\"" + client.JID.Local + "\", realm=\"" + realm + "\", nonce=\"" + nonce + "\", cnonce=\"" + cnonceStr +
 				"\", nc=" + nonceCount + ", qop=" + qop + ", digest-uri=\"" + digestURI + "\", response=" + digest + ", charset=" + charset
 
-			fmt.Fprintf(client.conn, "<response xmlns='%s'>%s</response>\n", messages.NSSASL, base64.StdEncoding.EncodeToString([]byte(message)))
+			response.Body = base64.StdEncoding.EncodeToString([]byte(message))
+			client.Out.Encode(response)
+			break
+		}
+		if m == "PLAIN" {
+			mechanism = m
+			// Plain authentication: send base64-encoded \x00 user \x00 password.
+			raw := "\x00" + client.JID.Local + "\x00" + password
+			enc := make([]byte, base64.StdEncoding.EncodedLen(len(raw)))
+			base64.StdEncoding.Encode(enc, []byte(raw))
+			client.Out.Encode(&messages.SASLAuth{
+				Mechanism: "PLAIN",
+				Body:      string(enc),
+			})
 
-			err = client.ReadElement(&ch)
-			if err != nil {
-				return err
-			}
-			_, err = base64.StdEncoding.DecodeString(ch)
-			if err != nil {
-				return err
-			}
-			fmt.Fprintf(client.conn, "<response xmlns='%s'/>\n", messages.NSSASL)
 			break
 		}
 	}
 	if mechanism == "" {
-		return fmt.Errorf("PLAIN authentication is not an option: %v", f.Mechanisms.Mechanism)
+		return fmt.Errorf("PLAIN authentication is not an option: %s", f.Mechanisms.Mechanism)
 	}
 	element, err := client.Read()
 	if err != nil {
 		return err
 	}
-	if element.Name.Local != "success" {
-		return errors.New("auth failed: " + element.Name.Local)
+	fail := messages.SASLFailure{}
+	if err := client.In.DecodeElement(&fail, element); err == nil {
+		return errors.New(messages.XMLChildrenString(fail) + " : " + fail.Body)
+	}
+	if err := client.In.DecodeElement(&messages.SASLSuccess{}, element); err != nil {
+		return errors.New("auth failed - with unexpected answer")
 	}
 	return nil
 }
