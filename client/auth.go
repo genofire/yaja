@@ -86,7 +86,7 @@ func (client *Client) auth(password string) error {
 	if mechanism == "" {
 		return fmt.Errorf("PLAIN authentication is not an option: %s", f.Mechanisms.Mechanism)
 	}
-	client.Logging.Info("used auth with '%s'", mechanism)
+	client.Logging.Infof("used auth with '%s'", mechanism)
 
 	element, err := client.Read()
 	if err != nil {

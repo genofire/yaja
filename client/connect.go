@@ -42,8 +42,14 @@ func (client *Client) startStream() (*messages.StreamFeatures, error) {
 		debug += " tls"
 	}
 	debug += " mechanism("
+	mFirst := true
 	for _, m := range f.Mechanisms.Mechanism {
-		debug += m
+		if mFirst {
+			mFirst = false
+			debug += m
+		} else {
+			debug += ", " + m
+		}
 	}
 	debug += ")"
 	if f.Bind != nil {
@@ -81,41 +87,47 @@ func (client *Client) connect(password string) error {
 		return err
 	}
 
-	if _, err := client.startStream(); err != nil {
+	f, err := client.startStream()
+	if err != nil {
 		return err
 	}
-	// bind to resource
-	bind := &messages.Bind{}
-	if client.JID.Resource != "" {
-		bind.Resource = client.JID.Resource
-	}
-	if err := client.Send(&messages.IQClient{
-		Type: messages.IQTypeSet,
-		To:   model.NewJID(client.JID.Domain),
-		Bind: bind,
-	}); err != nil {
-		return err
-	}
-
-	var iq messages.IQClient
-	if err := client.ReadDecode(&iq); err != nil {
-		return err
-	}
-	if iq.Error != nil {
-		if iq.Error.ServiceUnavailable == nil {
-			return errors.New(fmt.Sprintf("recv error on iq>bind: %s[%s]: %s -> %s -> %s", iq.Error.Code, iq.Error.Type, iq.Error.Text, messages.XMLChildrenString(iq.Error.StanzaErrorGroup), messages.XMLChildrenString(iq.Error.Other)))
-		} else {
-			client.Logging.Warn("connected without setting resource with bind after auth: service-unavailable")
+	bind := f.Bind
+	if f.Bind == nil || (f.Bind.JID == nil && f.Bind.Resource == "") {
+		// bind to resource
+		if client.JID.Resource != "" {
+			bind.Resource = client.JID.Resource
 		}
-	} else if iq.Bind == nil {
-		return errors.New("<iq> result missing <bind>")
-	} else if iq.Bind.JID != nil {
-		client.JID.Local = iq.Bind.JID.Local
-		client.JID.Domain = iq.Bind.JID.Domain
-		client.JID.Resource = iq.Bind.JID.Resource
-		client.Logging.Info("set resource by server bind")
+		if err := client.Send(&messages.IQClient{
+			Type: messages.IQTypeSet,
+			To:   model.NewJID(client.JID.Domain),
+			Bind: bind,
+		}); err != nil {
+			return err
+		}
+
+		var iq messages.IQClient
+		if err := client.ReadDecode(&iq); err != nil {
+			return err
+		}
+		if iq.Error != nil {
+			return errors.New(fmt.Sprintf("recv error on iq>bind: %s[%s]: %s -> %s -> %s", iq.Error.Code, iq.Error.Type, iq.Error.Text, messages.XMLChildrenString(iq.Error.StanzaErrorGroup), messages.XMLChildrenString(iq.Error.Other)))
+		} else if iq.Bind == nil {
+			return errors.New("iq>bind is nil :" + messages.XMLChildrenString(iq.Other))
+		}
+		bind = iq.Bind
+	}
+	if bind == nil {
+		return errors.New("bind is nil")
+	} else if bind.JID != nil {
+		client.JID.Local = bind.JID.Local
+		client.JID.Domain = bind.JID.Domain
+		client.JID.Resource = bind.JID.Resource
+		client.Logging.Infof("set jid by server bind '%s'", bind.JID.Full())
+	} else if bind.Resource != "" {
+		client.JID.Resource = bind.Resource
+		client.Logging.Infof("set resource by server bind '%s'", bind.Resource)
 	} else {
-		return errors.New(messages.XMLChildrenString(iq.Other))
+		return errors.New("bind>jid is nil" + messages.XMLChildrenString(bind))
 	}
 	// set status
 	return client.Send(&messages.PresenceClient{Show: messages.PresenceShowXA, Status: "online"})

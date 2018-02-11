@@ -112,10 +112,10 @@ func (t *Tester) StartBot(status *Status) {
 			for _, jid := range t.Admins {
 				if first {
 					first = false
+					allAdmins += jid.Bare()
 				} else {
-					allAdmins += ", "
+					allAdmins += ", " + jid.Bare()
 				}
-				allAdmins += jid.Bare()
 				if jid.Bare() == msg.From.Bare() {
 					isAdmin = true
 					status.client.Send(messages.MessageClient{Type: msg.Type, To: jid, Body: "last message, disconnect requested by " + msg.From.Bare()})

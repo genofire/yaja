@@ -23,7 +23,7 @@ func XMLStartElementToString(element *xml.StartElement) string {
 	}
 	debug := fmt.Sprintf("<%s xmlns=\"%s\"", element.Name.Local, element.Name.Space)
 	for _, attr := range element.Attr {
-		debug = fmt.Sprintf("%s %s=\"%s\"", debug, attr.Name, attr.Value)
+		debug = fmt.Sprintf("%s %s=\"%s\"", debug, attr.Name.Local, attr.Value)
 	}
 	debug += ">"
 	return debug
@@ -54,10 +54,10 @@ func XMLChildrenString(o interface{}) (result string) {
 		if xmlElement, ok := valueField.Interface().(*xml.Name); ok && xmlElement != nil {
 			if first {
 				first = false
+				result += xmlElement.Local
 			} else {
-				result += ", "
+				result += ", " + xmlElement.Local
 			}
-			result += xmlElement.Local
 		}
 	}
 	return
