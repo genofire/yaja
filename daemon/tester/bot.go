@@ -82,7 +82,7 @@ func (t *Tester) StartBot(status *Status) {
 		}
 		logCTX = logCTX.WithField("from", msg.From.Full()).WithField("msg-recv", msg.Body)
 		if msg.Error != nil {
-			logCTX.Debugf("recv msg with error %s: %s", msg.Error.Code, msg.Error.Text)
+			logCTX.Debugf("recv msg with error %s[%s]: %s -> %v -> %v", msg.Error.Code, msg.Error.Type, msg.Error.Text, msg.Error.StanzaErrorGroup, msg.Error.Other)
 			continue
 
 		}

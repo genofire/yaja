@@ -115,9 +115,8 @@ func (state *RegisterRequest) Process() state.State {
 			Error: &messages.ErrorClient{
 				Code: "409",
 				Type: "cancel",
-				Any: xml.Name{
-					Local: "conflict",
-					Space: "urn:ietf:params:xml:ns:xmpp-stanzas",
+				StanzaErrorGroup: messages.StanzaErrorGroup{
+					Conflict: &xml.Name{},
 				},
 			},
 		})

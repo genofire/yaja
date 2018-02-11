@@ -149,10 +149,15 @@ func (client *Client) connect(password string) error {
 	if err := client.ReadElement(&iq); err != nil {
 		return err
 	}
-	if iq.Bind == nil {
+	if iq.Error != nil {
+		if iq.Error.Type == messages.ErrorClientTypeCancel && iq.Error.ServiceUnavailable != nil {
+			//TODO binding service unavailable
+		} else {
+			return errors.New(fmt.Sprintf("recv error on iq>bind: %s[%s]: %s -> %v", iq.Error.Code, iq.Error.Type, iq.Error.Text, iq.Error.Other))
+		}
+	} else if iq.Bind == nil {
 		return errors.New("<iq> result missing <bind>")
-	}
-	if iq.Bind.JID != nil {
+	} else if iq.Bind.JID != nil {
 		client.JID.Local = iq.Bind.JID.Local
 		client.JID.Domain = iq.Bind.JID.Domain
 		client.JID.Resource = iq.Bind.JID.Resource
@@ -160,7 +165,7 @@ func (client *Client) connect(password string) error {
 		return errors.New(fmt.Sprintf("%v", iq.Other))
 	}
 	// set status
-	client.Send(&messages.PresenceClient{Show: messages.ShowTypeXA, Status: "online"})
+	err = client.Send(&messages.PresenceClient{Show: messages.ShowTypeXA, Status: "online"})
 
 	return err
 }
