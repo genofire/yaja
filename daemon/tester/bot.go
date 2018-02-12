@@ -28,7 +28,7 @@ func (t *Tester) StartBot(status *Status) {
 		errMSG := &messages.StreamError{}
 		err = status.client.Decode(errMSG, element)
 		if err == nil {
-			status.Disconnect(fmt.Sprintf("recv stream error: %s: %s", errMSG.Text, messages.XMLChildrenString(errMSG.Any)))
+			status.Disconnect(fmt.Sprintf("recv stream error: %s: %s -> %s", errMSG.Text, messages.XMLChildrenString(errMSG.StreamErrorGroup), messages.XMLChildrenString(errMSG.Other)))
 			return
 		}
 

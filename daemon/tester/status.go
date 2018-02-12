@@ -37,6 +37,7 @@ func NewStatus(backupClient *client.Client, acc *Account) *Status {
 func (s *Status) Disconnect(reason string) {
 	if s.Login {
 		msg := &messages.MessageClient{
+			Type: messages.MessageTypeChat,
 			Body: fmt.Sprintf("you recieve a notify that '%s' disconnect: %s", s.JID.Full(), reason),
 		}
 		for jid, _ := range s.account.Admins {
