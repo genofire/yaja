@@ -44,7 +44,7 @@ func (ex *IQPrivateRoster) Handle(msg *messages.IQClient, client *utils.Client) 
 	client.Messages <- &messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   client.JID,
-		From: model.NewJID(client.JID.Domain),
+		From: messages.NewJID(client.JID.Domain),
 		ID:   msg.ID,
 		Body: queryByte,
 	}

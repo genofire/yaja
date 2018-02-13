@@ -7,14 +7,13 @@ import (
 
 	"dev.sum7.eu/genofire/yaja/client"
 	"dev.sum7.eu/genofire/yaja/messages"
-	"dev.sum7.eu/genofire/yaja/model"
 )
 
 type Status struct {
 	backupClient         *client.Client
 	client               *client.Client
 	account              *Account
-	JID                  *model.JID        `json:"jid"`
+	JID                  *messages.JID     `json:"jid"`
 	Domain               string            `json:"domain"`
 	Login                bool              `json:"is_online"`
 	MessageForConnection map[string]string `json:"-"`
@@ -41,7 +40,7 @@ func (s *Status) Disconnect(reason string) {
 			Body: fmt.Sprintf("you recieve a notify that '%s' disconnect: %s", s.JID.Full(), reason),
 		}
 		for jid, _ := range s.account.Admins {
-			msg.To = model.NewJID(jid)
+			msg.To = messages.NewJID(jid)
 			if err := s.backupClient.Send(msg); err != nil {
 				s.client.Send(msg)
 			}
@@ -59,7 +58,7 @@ func (s *Status) Update(timeout time.Duration) {
 	}
 
 	c := &client.Client{
-		JID:      model.NewJID(s.account.JID.Bare()),
+		JID:      messages.NewJID(s.account.JID.Bare()),
 		Protocol: "tcp4",
 		Logging:  s.client.Logging,
 		Timeout:  timeout / 2,
@@ -72,7 +71,7 @@ func (s *Status) Update(timeout time.Duration) {
 		s.IPv4 = false
 	}
 
-	c.JID = model.NewJID(s.account.JID.Bare())
+	c.JID = messages.NewJID(s.account.JID.Bare())
 	c.Protocol = "tcp6"
 
 	if err := c.Connect(s.account.Password); err == nil {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"dev.sum7.eu/genofire/yaja/model"
+	"dev.sum7.eu/genofire/yaja/messages"
 	"github.com/FreifunkBremen/yanic/lib/jsontime"
 )
 
@@ -53,7 +53,7 @@ func (t *Tester) Output() *Output {
 				}
 				continue
 			}
-			toJID := model.NewJID(to)
+			toJID := messages.NewJID(to)
 			link := &Link{
 				Source:     status.JID.Domain,
 				SourceJID:  status.JID.Bare(),

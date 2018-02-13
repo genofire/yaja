@@ -8,7 +8,6 @@ import (
 
 	"dev.sum7.eu/genofire/yaja/database"
 	"dev.sum7.eu/genofire/yaja/messages"
-	"dev.sum7.eu/genofire/yaja/model"
 	"dev.sum7.eu/genofire/yaja/server/extension"
 	"dev.sum7.eu/genofire/yaja/server/state"
 	"dev.sum7.eu/genofire/yaja/server/utils"
@@ -226,7 +225,7 @@ func (state *AuthedStream) Process() state.State {
 	state.Client.Out.Encode(&messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   state.Client.JID,
-		From: model.NewJID(state.Client.JID.Domain),
+		From: messages.NewJID(state.Client.JID.Domain),
 		ID:   msg.ID,
 		Bind: &messages.Bind{JID: state.Client.JID},
 	})

@@ -1,7 +1,7 @@
 package tester
 
 import (
-	"dev.sum7.eu/genofire/yaja/model"
+	"dev.sum7.eu/genofire/yaja/messages"
 	"github.com/FreifunkBremen/yanic/lib/duration"
 	log "github.com/sirupsen/logrus"
 )
@@ -15,9 +15,9 @@ type Config struct {
 	LoggingBots    log.Level         `toml:"logging_bots"`
 	Timeout        duration.Duration `toml:"timeout"`
 	Interval       duration.Duration `toml:"interval"`
-	Admins         []*model.JID      `toml:"admins"`
+	Admins         []*messages.JID   `toml:"admins"`
 	Client         struct {
-		JID      *model.JID `toml:"jid"`
-		Password string     `toml:"password"`
+		JID      *messages.JID `toml:"jid"`
+		Password string        `toml:"password"`
 	} `toml:"client"`
 }

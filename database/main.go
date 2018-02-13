@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sync"
 
+	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -48,7 +49,7 @@ func (s *State) AddAccount(a *model.Account) error {
 	return errors.New("no give domain")
 }
 
-func (s *State) Authenticate(jid *model.JID, password string) (bool, error) {
+func (s *State) Authenticate(jid *messages.JID, password string) (bool, error) {
 	logger := log.WithField("database", "auth")
 
 	if domain, ok := s.Domains[jid.Domain]; ok {
@@ -67,7 +68,7 @@ func (s *State) Authenticate(jid *model.JID, password string) (bool, error) {
 	return false, nil
 }
 
-func (s *State) GetAccount(jid *model.JID) *model.Account {
+func (s *State) GetAccount(jid *messages.JID) *model.Account {
 	logger := log.WithField("database", "get")
 
 	if domain, ok := s.Domains[jid.Domain]; ok {

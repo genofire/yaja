@@ -8,15 +8,6 @@ import (
 	"reflect"
 )
 
-type Delay struct {
-	Stamp string `xml:"stamp,attr"`
-}
-
-type XMLElement struct {
-	XMLName  xml.Name
-	InnerXML string `xml:",innerxml"`
-}
-
 func XMLStartElementToString(element *xml.StartElement) string {
 	if element == nil {
 		return "<nil>"

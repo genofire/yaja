@@ -10,7 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"dev.sum7.eu/genofire/yaja/model"
+	"dev.sum7.eu/genofire/yaja/messages"
 )
 
 // Client holds XMPP connection opitons
@@ -23,10 +23,17 @@ type Client struct {
 
 	Logging *log.Logger
 
-	JID *model.JID
+	JID *messages.JID
+
+	reply map[string]chan *messages.IQClient
+
+	skipError bool
+	iq        chan *messages.IQClient
+	presence  chan *messages.PresenceClient
+	mesage    chan *messages.MessageClient
 }
 
-func NewClient(jid *model.JID, password string) (*Client, error) {
+func NewClient(jid *messages.JID, password string) (*Client, error) {
 	client := &Client{
 		Protocol: "tcp",
 		JID:      jid,

@@ -94,7 +94,10 @@ func (client *Client) auth(password string) error {
 	}
 	fail := messages.SASLFailure{}
 	if err := client.Decode(&fail, element); err == nil {
-		return errors.New(messages.XMLChildrenString(fail) + " : " + fail.Body)
+		if txt := fail.Text; txt != nil {
+			return errors.New(messages.XMLChildrenString(fail) + " : " + txt.Body)
+		}
+		return errors.New(messages.XMLChildrenString(fail))
 	}
 	if err := client.Decode(&messages.SASLSuccess{}, element); err != nil {
 		return errors.New("auth failed - with unexpected answer")

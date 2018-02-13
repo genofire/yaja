@@ -7,7 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"dev.sum7.eu/genofire/yaja/messages"
-	"dev.sum7.eu/genofire/yaja/model"
 )
 
 func (t *Tester) StartBot(status *Status) {
@@ -141,15 +140,15 @@ func (t *Tester) StartBot(status *Status) {
 		}
 	}
 }
-func botAllowed(list []*model.JID, toConvert map[string]interface{}) []*model.JID {
+func botAllowed(list []*messages.JID, toConvert map[string]interface{}) []*messages.JID {
 	alist := list
 	for jid, _ := range toConvert {
-		alist = append(alist, model.NewJID(jid))
+		alist = append(alist, messages.NewJID(jid))
 	}
 	return alist
 }
 
-func botAdmin(cmd []string, log *log.Entry, status *Status, from *model.JID, allowed []*model.JID) {
+func botAdmin(cmd []string, log *log.Entry, status *Status, from *messages.JID, allowed []*messages.JID) {
 	msg := ""
 	if len(cmd) == 2 {
 		isAdmin := false

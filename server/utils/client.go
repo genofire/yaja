@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"net"
 
+	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -15,7 +16,7 @@ type Client struct {
 	Out  *xml.Encoder
 	In   *xml.Decoder
 
-	JID     *model.JID
+	JID     *messages.JID
 	account *model.Account
 
 	Messages chan interface{}

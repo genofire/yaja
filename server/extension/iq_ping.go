@@ -2,7 +2,6 @@ package extension
 
 import (
 	"dev.sum7.eu/genofire/yaja/messages"
-	"dev.sum7.eu/genofire/yaja/model"
 	"dev.sum7.eu/genofire/yaja/server/utils"
 )
 
@@ -23,7 +22,7 @@ func (ex *IQPing) Get(msg *messages.IQClient, client *utils.Client) bool {
 	client.Messages <- &messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   client.JID,
-		From: model.NewJID(client.JID.Domain),
+		From: messages.NewJID(client.JID.Domain),
 		ID:   msg.ID,
 	}
 

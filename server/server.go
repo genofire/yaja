@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"dev.sum7.eu/genofire/yaja/database"
-	"dev.sum7.eu/genofire/yaja/model"
+	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/server/extension"
 	"dev.sum7.eu/genofire/yaja/server/toclient"
 	"dev.sum7.eu/genofire/yaja/server/toserver"
@@ -109,7 +109,7 @@ func (srv *Server) handleClient(conn net.Conn) {
 	}
 }
 
-func (srv *Server) DomainRegisterAllowed(jid *model.JID) bool {
+func (srv *Server) DomainRegisterAllowed(jid *messages.JID) bool {
 	if jid.Domain == "" {
 		return false
 	}

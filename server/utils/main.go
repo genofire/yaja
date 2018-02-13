@@ -1,7 +1,5 @@
 package utils
 
-import (
-	"dev.sum7.eu/genofire/yaja/model"
-)
+import "dev.sum7.eu/genofire/yaja/messages"
 
-type DomainRegisterAllowed func(*model.JID) bool
+type DomainRegisterAllowed func(*messages.JID) bool

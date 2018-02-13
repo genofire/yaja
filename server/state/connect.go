@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"dev.sum7.eu/genofire/yaja/messages"
-	"dev.sum7.eu/genofire/yaja/model"
 	"dev.sum7.eu/genofire/yaja/server/utils"
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -33,7 +32,7 @@ func (state *Start) Process() State {
 	}
 	for _, attr := range element.Attr {
 		if attr.Name.Local == "to" {
-			state.Client.JID = &model.JID{Domain: attr.Value}
+			state.Client.JID = &messages.JID{Domain: attr.Value}
 			state.Client.Log = state.Client.Log.WithField("jid", state.Client.JID.Full())
 		}
 	}
@@ -75,11 +74,11 @@ func (state *TLSUpgrade) Process() State {
 		state.Client.Log.Warn("unable to read: ", err)
 		return nil
 	}
-	if element.Name.Space != messages.NSTLS || element.Name.Local != "starttls" {
+	if element.Name.Space != messages.NSStartTLS || element.Name.Local != "starttls" {
 		state.Client.Log.Warn("is no starttls", element)
 		return nil
 	}
-	fmt.Fprintf(state.Client.Conn, "<proceed xmlns='%s'/>", messages.NSTLS)
+	fmt.Fprintf(state.Client.Conn, "<proceed xmlns='%s'/>", messages.NSStartTLS)
 	// perform the TLS handshake
 	var tlsConfig *tls.Config
 	if m := state.TLSManager; m != nil {

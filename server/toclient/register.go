@@ -49,7 +49,7 @@ func (state *RegisterFormRequest) Process() state.State {
 	state.Client.Out.Encode(&messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   state.Client.JID,
-		From: model.NewJID(state.Client.JID.Domain),
+		From: messages.NewJID(state.Client.JID.Domain),
 		ID:   msg.ID,
 		PrivateRegister: &messages.IQPrivateRegister{
 			Instructions: "Choose a username and password for use with this service.",
@@ -109,7 +109,7 @@ func (state *RegisterRequest) Process() state.State {
 		state.Client.Out.Encode(&messages.IQClient{
 			Type:            messages.IQTypeResult,
 			To:              state.Client.JID,
-			From:            model.NewJID(state.Client.JID.Domain),
+			From:            messages.NewJID(state.Client.JID.Domain),
 			ID:              msg.ID,
 			PrivateRegister: msg.PrivateRegister,
 			Error: &messages.ErrorClient{
@@ -126,7 +126,7 @@ func (state *RegisterRequest) Process() state.State {
 	state.Client.Out.Encode(&messages.IQClient{
 		Type: messages.IQTypeResult,
 		To:   state.Client.JID,
-		From: model.NewJID(state.Client.JID.Domain),
+		From: messages.NewJID(state.Client.JID.Domain),
 		ID:   msg.ID,
 	})
 

@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 )
 
-// RFC 3920  C.4  SASL name space
+// RFC 6120 - A.4 SASL Namespace
 type SASLMechanisms struct {
 	XMLName   xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl mechanisms"`
 	Mechanism []string `xml:"mechanism"`
@@ -40,7 +40,7 @@ type SASLAbout struct {
 	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl abort"`
 }
 
-// SASLFailure element
+// RFC 6120 - A.4 SASL Namespace
 type SASLFailure struct {
 	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl failure"`
 
@@ -56,5 +56,5 @@ type SASLFailure struct {
 	NotAuthorized        *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl not-authorized"`
 	TemporaryAuthFailure *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl temporary-auth-failure"`
 
-	Body string `xml:",chardata"`
+	Text *Text
 }

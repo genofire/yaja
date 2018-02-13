@@ -3,6 +3,8 @@ package model
 import (
 	"errors"
 	"sync"
+
+	"dev.sum7.eu/genofire/yaja/messages"
 )
 
 type Domain struct {
@@ -11,8 +13,8 @@ type Domain struct {
 	sync.Mutex
 }
 
-func (d *Domain) GetJID() *JID {
-	return &JID{
+func (d *Domain) GetJID() *messages.JID {
+	return &messages.JID{
 		Domain: d.FQDN,
 	}
 }
@@ -36,7 +38,7 @@ type Account struct {
 	Bookmarks map[string]*Bookmark `json:"bookmarks"`
 }
 
-func NewAccount(jid *JID, password string) *Account {
+func NewAccount(jid *messages.JID, password string) *Account {
 	if jid == nil {
 		return nil
 	}
@@ -49,8 +51,8 @@ func NewAccount(jid *JID, password string) *Account {
 	}
 }
 
-func (a *Account) GetJID() *JID {
-	return &JID{
+func (a *Account) GetJID() *messages.JID {
+	return &messages.JID{
 		Domain: a.Domain.FQDN,
 		Local:  a.Local,
 	}

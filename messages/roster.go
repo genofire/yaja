@@ -1,9 +1,9 @@
 package messages
 
+// which XEP ????
+
 import (
 	"encoding/xml"
-
-	"dev.sum7.eu/genofire/yaja/model"
 )
 
 type ClientQuery struct {
@@ -11,9 +11,9 @@ type ClientQuery struct {
 }
 
 type RosterItem struct {
-	XMLName      xml.Name   `xml:"jabber:iq:roster item"`
-	JID          *model.JID `xml:",attr"`
-	Name         string     `xml:",attr"`
-	Subscription string     `xml:",attr"`
+	XMLName      xml.Name `xml:"jabber:iq:roster item"`
+	JID          *JID     `xml:",attr"`
+	Name         string   `xml:",attr"`
+	Subscription string   `xml:",attr"`
 	Group        []string
 }

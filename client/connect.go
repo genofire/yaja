@@ -99,7 +99,7 @@ func (client *Client) connect(password string) error {
 		}
 		if err := client.Send(&messages.IQClient{
 			Type: messages.IQTypeSet,
-			To:   model.NewJID(client.JID.Domain),
+			To:   messages.NewJID(client.JID.Domain),
 			Bind: bind,
 		}); err != nil {
 			return err

@@ -8,7 +8,6 @@ import (
 
 	"dev.sum7.eu/genofire/yaja/client"
 	"dev.sum7.eu/genofire/yaja/messages"
-	"dev.sum7.eu/genofire/yaja/model"
 )
 
 type Tester struct {
@@ -17,9 +16,9 @@ type Tester struct {
 	Accounts       map[string]*Account `json:"accounts"`
 	Status         map[string]*Status  `json:"-"`
 	mux            sync.Mutex
-	LoggingClients *log.Logger  `json:"-"`
-	LoggingBots    log.Level    `json:"-"`
-	Admins         []*model.JID `json:"-"`
+	LoggingClients *log.Logger     `json:"-"`
+	LoggingBots    log.Level       `json:"-"`
+	Admins         []*messages.JID `json:"-"`
 }
 
 func NewTester() *Tester {
@@ -89,7 +88,7 @@ func (t *Tester) Connect(acc *Account) {
 	}
 }
 
-func (t *Tester) UpdateConnectionStatus(from, to *model.JID, recvmsg string) {
+func (t *Tester) UpdateConnectionStatus(from, to *messages.JID, recvmsg string) {
 	logCTX := log.WithFields(log.Fields{
 		"jid":      to.Full(),
 		"from":     from.Full(),
