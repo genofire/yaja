@@ -12,69 +12,69 @@ func TestNewJID(t *testing.T) {
 	assert := assert.New(t)
 
 	checkList := map[string]*JID{
-		"juliet@example.com": &JID{
+		"juliet@example.com": {
 			Local:  "juliet",
 			Domain: "example.com",
 		},
-		"juliet@example.com/foo": &JID{
+		"juliet@example.com/foo": {
 			Local:    "juliet",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
-		"juliet@example.com/foo bar": &JID{
+		"juliet@example.com/foo bar": {
 			Local:    "juliet",
 			Domain:   "example.com",
 			Resource: "foo bar",
 		},
-		"juliet@example.com/foo@bar": &JID{
+		"juliet@example.com/foo@bar": {
 			Local:    "juliet",
 			Domain:   "example.com",
 			Resource: "foo@bar",
 		},
-		"foo\\20bar@example.com": &JID{
+		"foo\\20bar@example.com": {
 			Local:  "foo\\20bar",
 			Domain: "example.com",
 		},
-		"fussball@example.com": &JID{
+		"fussball@example.com": {
 			Local:  "fussball",
 			Domain: "example.com",
 		},
-		"fu&#xDF;ball@example.com": &JID{
+		"fu&#xDF;ball@example.com": {
 			Local:  "fu&#xDF;ball",
 			Domain: "example.com",
 		},
-		"&#x3C0;@example.com": &JID{
+		"&#x3C0;@example.com": {
 			Local:  "&#x3C0;",
 			Domain: "example.com",
 		},
-		"&#x3A3;@example.com/foo": &JID{
+		"&#x3A3;@example.com/foo": {
 			Local:    "&#x3A3;",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
-		"&#x3C3;@example.com/foo": &JID{
+		"&#x3C3;@example.com/foo": {
 			Local:    "&#x3C3;",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
-		"&#x3C2;@example.com/foo": &JID{
+		"&#x3C2;@example.com/foo": {
 			Local:    "&#x3C2;",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
-		"king@example.com/&#x265A;": &JID{
+		"king@example.com/&#x265A;": {
 			Local:    "king",
 			Domain:   "example.com",
 			Resource: "&#x265A;",
 		},
-		"example.com": &JID{
+		"example.com": {
 			Domain: "example.com",
 		},
-		"example.com/foobar": &JID{
+		"example.com/foobar": {
 			Domain:   "example.com",
 			Resource: "foobar",
 		},
-		"a.example.com/b@example.net": &JID{
+		"a.example.com/b@example.net": {
 			Domain:   "a.example.com",
 			Resource: "b@example.net",
 		},
@@ -112,16 +112,16 @@ func TestJIDBare(t *testing.T) {
 	assert := assert.New(t)
 
 	checkList := map[string]*JID{
-		"aaa@example.com": &JID{
+		"aaa@example.com": {
 			Local:  "aaa",
 			Domain: "example.com",
 		},
-		"aab@example.com": &JID{
+		"aab@example.com": {
 			Local:    "aab",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
-		"example.com": &JID{
+		"example.com": {
 			Domain:   "example.com",
 			Resource: "foo",
 		},

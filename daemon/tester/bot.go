@@ -142,7 +142,7 @@ func (t *Tester) StartBot(status *Status) {
 }
 func botAllowed(list []*messages.JID, toConvert map[string]interface{}) []*messages.JID {
 	alist := list
-	for jid, _ := range toConvert {
+	for jid := range toConvert {
 		alist = append(alist, messages.NewJID(jid))
 	}
 	return alist
@@ -173,7 +173,7 @@ func botAdmin(cmd []string, log *log.Entry, status *Status, from *messages.JID, 
 		}
 	} else {
 		if len(cmd) == 1 && cmd[0] == "list" {
-			for jid, _ := range status.account.Admins {
+			for jid := range status.account.Admins {
 				if msg == "" {
 					msg += "admins are: " + jid
 				} else {

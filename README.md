@@ -1,10 +1,15 @@
 # yaja (Yet Another JAbber implementation)
 
+[![CircleCI](https://circleci.com/gh/genofire/yaja/tree/master.svg?style=shield)](https://circleci.com/gh/genofire/yaja/tree/master)
+[![Coverage Status](https://coveralls.io/repos/github/genofire/yaja/badge.svg?branch=master)](https://coveralls.io/github/genofire/yaja?branch=master)
+[![codecov](https://codecov.io/gh/genofire/yaja/branch/master/graph/badge.svg)](https://codecov.io/gh/genofire/yaja)
+[![Go Report Card](https://goreportcard.com/badge/github.com/genofire/yaja)](https://goreportcard.com/report/github.com/genofire/yaja)
 [![chat on our conference room](https://camo.githubusercontent.com/a839cc0a3d4dac7ec82237381b165dd144365b6d/68747470733a2f2f74696e7975726c2e636f6d2f6a6f696e7468656d7563)](https://conversations.im/j/yaja@conference.chat.sum7.eu)
 
 ## Features
 - Messages XML Library (first version - PR are welcome)
 	- Full RFC 6120 (XMPP - Core)
+	- XEP-0199: XMPP Ping
 - Client Library (WIP)
 	-	Stream: TLS Required
 		- SASL-Auth (PLAIN, DIGEST-MD5)
@@ -29,6 +34,7 @@ all implementation of all comman (RFCs and XEPs) xml element
 
 **Version**
 - RFC 6120 (XMPP - Core)
+- XEP-0199: XMPP Ping
 
 ### Client
 

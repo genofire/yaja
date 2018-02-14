@@ -39,7 +39,7 @@ func (s *Status) Disconnect(reason string) {
 			Type: messages.MessageTypeChat,
 			Body: fmt.Sprintf("you recieve a notify that '%s' disconnect: %s", s.JID.Full(), reason),
 		}
-		for jid, _ := range s.account.Admins {
+		for jid := range s.account.Admins {
 			msg.To = messages.NewJID(jid)
 			if err := s.backupClient.Send(msg); err != nil {
 				s.client.Send(msg)
