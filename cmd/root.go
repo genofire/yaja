@@ -13,8 +13,8 @@ var (
 // RootCmd represents the base command when called without any subcommands
 var RootCMD = &cobra.Command{
 	Use:   "yaja",
-	Short: "Yet another jabber server",
-	Long:  `A small standalone jabber server, for easy deployment`,
+	Short: "Yet another jabber implementation",
+	Long:  `A small standalone command line round about jabber (e.g tester WIP: client & server)`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

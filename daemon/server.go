@@ -199,6 +199,6 @@ func init() {
 		extension.IQExtensions{
 			&extension.IQPing{},
 		})
-	ServerCMD.Flags().StringVarP(&configPath, "config", "c", "yaja-server.conf", "Path to configuration file")
+	ServerCMD.Flags().StringVarP(&configPath, "config", "c", "yaja-server.conf", "path to configuration file")
 
 }

@@ -104,6 +104,6 @@ func quitTester() {
 }
 
 func init() {
-	TesterCMD.Flags().StringVarP(&configPath, "config", "c", "yaja-tester.conf", "Path to configuration file")
+	TesterCMD.Flags().StringVarP(&configPath, "config", "c", "yaja-tester.conf", "path to configuration file")
 
 }
