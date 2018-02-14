@@ -1,8 +1,8 @@
-package messages
+package xmpp
 
 import "encoding/xml"
 
-// RFC 6120 - A.6 Server Namespace (a part)
+// ErrorServer implements RFC 6120 - A.6 Server Namespace (a part)
 type ErrorServer struct {
 	XMLName xml.Name  `xml:"jabber:server error"`
 	Code    string    `xml:"code,attr,omitempty"`

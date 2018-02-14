@@ -1,5 +1,6 @@
-package messages
+package xmpp
 
+// PresenceType is a Enum of presence attribute type
 type PresenceType string
 
 // RFC 6120 part of A.5 Client Namespace and A.6 Server Namespace
@@ -13,6 +14,7 @@ const (
 	PresenceTypeUnsubscribed PresenceType = "unsubscribed"
 )
 
+// PresenceShow is a Enum of presence element show
 type PresenceShow string
 
 // RFC 6120 part of A.5 Client Namespace and A.6 Server Namespace

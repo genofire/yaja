@@ -3,7 +3,7 @@ package client
 import (
 	"encoding/xml"
 
-	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/xmpp"
 )
 
 func (client *Client) Read() (*xml.StartElement, error) {
@@ -15,7 +15,7 @@ func (client *Client) Read() (*xml.StartElement, error) {
 		switch nextToken.(type) {
 		case xml.StartElement:
 			element := nextToken.(xml.StartElement)
-			client.Logging.Debug("recv xml: ", messages.XMLStartElementToString(&element))
+			client.Logging.Debug("recv xml: ", xmpp.XMLStartElementToString(&element))
 			return &element, nil
 		}
 	}
@@ -23,9 +23,9 @@ func (client *Client) Read() (*xml.StartElement, error) {
 func (client *Client) Decode(p interface{}, element *xml.StartElement) error {
 	err := client.in.DecodeElement(p, element)
 	if err != nil {
-		client.Logging.Debugf("decode failed xml: %s to: %v", messages.XMLStartElementToString(element), p)
+		client.Logging.Debugf("decode failed xml: %s to: %v", xmpp.XMLStartElementToString(element), p)
 	} else {
-		client.Logging.Debugf("decode xml: %s to: %v with children %s", messages.XMLStartElementToString(element), p, messages.XMLChildrenString(p))
+		client.Logging.Debugf("decode xml: %s to: %v with children %s", xmpp.XMLStartElementToString(element), p, xmpp.XMLChildrenString(p))
 	}
 	return err
 }
@@ -34,15 +34,15 @@ func (client *Client) ReadDecode(p interface{}) error {
 	if err != nil {
 		return err
 	}
-	var iq *messages.IQClient
-	iq, ok := p.(*messages.IQClient)
+	var iq *xmpp.IQClient
+	iq, ok := p.(*xmpp.IQClient)
 	if !ok {
-		iq = &messages.IQClient{}
+		iq = &xmpp.IQClient{}
 	}
 	err = client.Decode(iq, element)
 	if err == nil && iq.Ping != nil {
 		client.Logging.Info("ReadElement: auto answer ping")
-		iq.Type = messages.IQTypeResult
+		iq.Type = xmpp.IQTypeResult
 		iq.To = iq.From
 		iq.From = client.JID
 		client.Send(iq)
@@ -58,23 +58,23 @@ func (client *Client) encode(p interface{}) error {
 	if err != nil {
 		client.Logging.Debugf("encode failed %v", p)
 	} else {
-		client.Logging.Debugf("encode %v with children %s", p, messages.XMLChildrenString(p))
+		client.Logging.Debugf("encode %v with children %s", p, xmpp.XMLChildrenString(p))
 	}
 	return err
 }
 
 func (client *Client) Send(p interface{}) error {
-	msg, ok := p.(*messages.MessageClient)
+	msg, ok := p.(*xmpp.MessageClient)
 	if ok {
 		msg.From = client.JID
 		return client.encode(msg)
 	}
-	iq, ok := p.(*messages.IQClient)
+	iq, ok := p.(*xmpp.IQClient)
 	if ok {
 		iq.From = client.JID
 		return client.encode(iq)
 	}
-	pc, ok := p.(*messages.PresenceClient)
+	pc, ok := p.(*xmpp.PresenceClient)
 	if ok {
 		pc.From = client.JID
 		return client.encode(pc)

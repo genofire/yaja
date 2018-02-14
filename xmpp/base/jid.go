@@ -1,4 +1,4 @@
-package messages
+package xmppbase
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ func init() {
 
 // JID struct
 type JID struct {
-	Local    string
+	Node     string
 	Domain   string
 	Resource string
 }
@@ -28,7 +28,7 @@ func NewJID(jidString string) *JID {
 	jidSplit := jidSplitTmp[0]
 
 	return &JID{
-		Local:    jidSplit[1],
+		Node:     jidSplit[1],
 		Domain:   jidSplit[2],
 		Resource: jidSplit[3],
 	}
@@ -39,13 +39,16 @@ func (jid *JID) Bare() string {
 	if jid == nil {
 		return ""
 	}
-	if jid.Local != "" {
-		return jid.Local + "@" + jid.Domain
+	if jid.Node != "" {
+		return jid.Node + "@" + jid.Domain
 	}
 	return jid.Domain
 }
 
-func (jid *JID) String() string { return jid.Bare() }
+// IsBare checks if jid has node and domain but no resource
+func (jid *JID) IsBare() bool {
+	return jid != nil && jid.Node != "" && jid.Domain != "" && jid.Resource == ""
+}
 
 // Full get the "full" jid as string
 func (jid *JID) Full() string {
@@ -58,6 +61,13 @@ func (jid *JID) Full() string {
 	return jid.Bare()
 }
 
+// IsFull checks if jid has all three parts of a JID
+func (jid *JID) IsFull() bool {
+	return jid != nil && jid.Node != "" && jid.Domain != "" && jid.Resource != ""
+}
+
+func (jid *JID) String() string { return jid.Bare() }
+
 //MarshalText to bytearray
 func (jid JID) MarshalText() ([]byte, error) {
 	return []byte(jid.Full()), nil
@@ -69,7 +79,7 @@ func (jid *JID) UnmarshalText(data []byte) (err error) {
 	if newJID == nil {
 		return errors.New("not a valid jid")
 	}
-	jid.Local = newJID.Local
+	jid.Node = newJID.Node
 	jid.Domain = newJID.Domain
 	jid.Resource = newJID.Resource
 	return nil

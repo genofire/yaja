@@ -1,9 +1,9 @@
 package tester
 
-import "dev.sum7.eu/genofire/yaja/messages"
+import "dev.sum7.eu/genofire/yaja/xmpp/base"
 
 type Account struct {
-	JID      *messages.JID          `json:"jid"`
+	JID      *xmppbase.JID          `json:"jid"`
 	Password string                 `json:"password"`
 	Admins   map[string]interface{} `json:"admins"`
 }

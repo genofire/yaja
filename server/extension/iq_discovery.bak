@@ -3,7 +3,7 @@ package extension
 import (
 	"encoding/xml"
 
-	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/xmpp"
 	"dev.sum7.eu/genofire/yaja/model"
 	"dev.sum7.eu/genofire/yaja/server/utils"
 )
@@ -15,7 +15,7 @@ type IQExtensionDiscovery struct {
 
 func (ex *IQExtensionDiscovery) Spaces() []string { return []string{} }
 
-func (ex *IQExtensionDiscovery) Get(msg *messages.IQClient, client *utils.Client) bool {
+func (ex *IQExtensionDiscovery) Get(msg *xmpp.IQClient, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "roster").WithField("id", msg.ID)
 
 	// query encode
@@ -58,10 +58,10 @@ func (ex *IQExtensionDiscovery) Get(msg *messages.IQClient, client *utils.Client
 	}
 
 	// replay
-	client.Messages <- &messages.IQClient{
-		Type: messages.IQTypeResult,
+	client.Messages <- &xmpp.IQClient{
+		Type: xmpp.IQTypeResult,
 		To:   client.JID,
-		From: messages.NewJID(client.JID.Domain),
+		From: xmpp.NewJID(client.JID.Domain),
 		ID:   msg.ID,
 		Body: queryByte,
 	}

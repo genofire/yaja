@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"strings"
 
+	"golang.org/x/crypto/acme/autocert"
+
 	"dev.sum7.eu/genofire/yaja/database"
-	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/server/extension"
 	"dev.sum7.eu/genofire/yaja/server/state"
 	"dev.sum7.eu/genofire/yaja/server/utils"
-	"golang.org/x/crypto/acme/autocert"
+	"dev.sum7.eu/genofire/yaja/xmpp"
+	"dev.sum7.eu/genofire/yaja/xmpp/base"
+	"dev.sum7.eu/genofire/yaja/xmpp/iq"
 )
 
 // ConnectionStartup return steps through TCP TLS state
@@ -47,7 +50,7 @@ type TLSStream struct {
 	domainRegisterAllowed utils.DomainRegisterAllowed
 }
 
-// Process messages
+// Process xmpp
 func (state *TLSStream) Process() state.State {
 	state.Client.Log = state.Client.Log.WithField("state", "tls stream")
 	state.Client.Log.Debug("running")
@@ -58,7 +61,7 @@ func (state *TLSStream) Process() state.State {
 		state.Client.Log.Warn("unable to read: ", err)
 		return nil
 	}
-	if element.Name.Space != messages.NSStream || element.Name.Local != "stream" {
+	if element.Name.Space != xmpp.NSStream || element.Name.Local != "stream" {
 		state.Client.Log.Warn("is no stream")
 		return state
 	}
@@ -72,8 +75,8 @@ func (state *TLSStream) Process() state.State {
 					<mechanism>PLAIN</mechanism>
 				</mechanisms>
 			</stream:features>`,
-			messages.CreateCookie(), messages.NSClient, messages.NSStream,
-			messages.NSSASL, messages.NSFeaturesIQRegister)
+			xmpp.CreateCookie(), xmpp.NSClient, xmpp.NSStream,
+			xmpp.NSSASL, xmppiq.NSFeaturesIQRegister)
 	} else {
 		fmt.Fprintf(state.Client.Conn, `<?xml version='1.0'?>
 			<stream:stream id='%x' version='1.0' xmlns='%s' xmlns:stream='%s'>
@@ -82,8 +85,8 @@ func (state *TLSStream) Process() state.State {
 					<mechanism>PLAIN</mechanism>
 				</mechanisms>
 			</stream:features>`,
-			messages.CreateCookie(), messages.NSClient, messages.NSStream,
-			messages.NSSASL)
+			xmpp.CreateCookie(), xmpp.NSClient, xmpp.NSStream,
+			xmpp.NSSASL)
 	}
 
 	return state.Next
@@ -97,7 +100,7 @@ type SASLAuth struct {
 	domainRegisterAllowed utils.DomainRegisterAllowed
 }
 
-// Process messages
+// Process xmpp
 func (state *SASLAuth) Process() state.State {
 	state.Client.Log = state.Client.Log.WithField("state", "sasl auth")
 	state.Client.Log.Debug("running")
@@ -109,7 +112,7 @@ func (state *SASLAuth) Process() state.State {
 		state.Client.Log.Warn("unable to read: ", err)
 		return nil
 	}
-	var auth messages.SASLAuth
+	var auth xmpp.SASLAuth
 	if err = state.Client.In.DecodeElement(&auth, element); err != nil {
 		state.Client.Log.Info("start substate for registration")
 		return &RegisterFormRequest{
@@ -131,7 +134,7 @@ func (state *SASLAuth) Process() state.State {
 	}
 	info := strings.Split(string(data), "\x00")
 	// should check that info[1] starts with state.Client.JID
-	state.Client.JID.Local = info[1]
+	state.Client.JID.Node = info[1]
 	state.Client.Log = state.Client.Log.WithField("jid", state.Client.JID.Full())
 	success, err := state.database.Authenticate(state.Client.JID, info[2])
 	if err != nil {
@@ -140,11 +143,11 @@ func (state *SASLAuth) Process() state.State {
 	}
 	if success {
 		state.Client.Log.Info("success auth")
-		fmt.Fprintf(state.Client.Conn, "<success xmlns='%s'/>", messages.NSSASL)
+		fmt.Fprintf(state.Client.Conn, "<success xmlns='%s'/>", xmpp.NSSASL)
 		return state.Next
 	}
 	state.Client.Log.Warn("failed auth")
-	fmt.Fprintf(state.Client.Conn, "<failure xmlns='%s'><not-authorized/></failure>", messages.NSSASL)
+	fmt.Fprintf(state.Client.Conn, "<failure xmlns='%s'><not-authorized/></failure>", xmpp.NSSASL)
 	return nil
 
 }
@@ -155,7 +158,7 @@ type AuthedStart struct {
 	Client *utils.Client
 }
 
-// Process messages
+// Process xmpp
 func (state *AuthedStart) Process() state.State {
 	state.Client.Log = state.Client.Log.WithField("state", "authed started")
 	state.Client.Log.Debug("running")
@@ -173,8 +176,8 @@ func (state *AuthedStart) Process() state.State {
 					<required/>
 				</bind>
 			</stream:features>`,
-		messages.NSStream, state.Client.JID.Domain, messages.CreateCookie(), messages.NSClient,
-		messages.NSBind)
+		xmpp.NSStream, state.Client.JID.Domain, xmpp.CreateCookie(), xmpp.NSClient,
+		xmpp.NSBind)
 
 	return state.Next
 }
@@ -185,7 +188,7 @@ type AuthedStream struct {
 	Client *utils.Client
 }
 
-// Process messages
+// Process xmpp
 func (state *AuthedStream) Process() state.State {
 	state.Client.Log = state.Client.Log.WithField("state", "authed stream")
 	state.Client.Log.Debug("running")
@@ -198,12 +201,12 @@ func (state *AuthedStream) Process() state.State {
 		state.Client.Log.Warn("unable to read: ", err)
 		return nil
 	}
-	var msg messages.IQClient
+	var msg xmpp.IQClient
 	if err = state.Client.In.DecodeElement(&msg, element); err != nil {
 		state.Client.Log.Warn("is no iq: ", err)
 		return nil
 	}
-	if msg.Type != messages.IQTypeSet {
+	if msg.Type != xmpp.IQTypeSet {
 		state.Client.Log.Warn("is no set iq")
 		return nil
 	}
@@ -222,12 +225,12 @@ func (state *AuthedStream) Process() state.State {
 		state.Client.JID.Resource = msg.Bind.Resource
 	}
 	state.Client.Log = state.Client.Log.WithField("jid", state.Client.JID.Full())
-	state.Client.Out.Encode(&messages.IQClient{
-		Type: messages.IQTypeResult,
+	state.Client.Out.Encode(&xmpp.IQClient{
+		Type: xmpp.IQTypeResult,
 		To:   state.Client.JID,
-		From: messages.NewJID(state.Client.JID.Domain),
+		From: xmppbase.NewJID(state.Client.JID.Domain),
 		ID:   msg.ID,
-		Bind: &messages.Bind{JID: state.Client.JID},
+		Bind: &xmpp.Bind{JID: state.Client.JID},
 	})
 
 	return state.Next

@@ -1,9 +1,10 @@
 package tester
 
 import (
-	"dev.sum7.eu/genofire/yaja/messages"
 	"github.com/FreifunkBremen/yanic/lib/duration"
 	log "github.com/sirupsen/logrus"
+
+	"dev.sum7.eu/genofire/yaja/xmpp/base"
 )
 
 type Config struct {
@@ -15,9 +16,9 @@ type Config struct {
 	LoggingBots    log.Level         `toml:"logging_bots"`
 	Timeout        duration.Duration `toml:"timeout"`
 	Interval       duration.Duration `toml:"interval"`
-	Admins         []*messages.JID   `toml:"admins"`
+	Admins         []*xmppbase.JID   `toml:"admins"`
 	Client         struct {
-		JID      *messages.JID `toml:"jid"`
+		JID      *xmppbase.JID `toml:"jid"`
 		Password string        `toml:"password"`
 	} `toml:"client"`
 }

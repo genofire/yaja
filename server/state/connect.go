@@ -4,9 +4,11 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"dev.sum7.eu/genofire/yaja/messages"
-	"dev.sum7.eu/genofire/yaja/server/utils"
 	"golang.org/x/crypto/acme/autocert"
+
+	"dev.sum7.eu/genofire/yaja/server/utils"
+	"dev.sum7.eu/genofire/yaja/xmpp"
+	"dev.sum7.eu/genofire/yaja/xmpp/base"
 )
 
 // Start state
@@ -26,13 +28,13 @@ func (state *Start) Process() State {
 		state.Client.Log.Warn("unable to read: ", err)
 		return nil
 	}
-	if element.Name.Space != messages.NSStream || element.Name.Local != "stream" {
+	if element.Name.Space != xmpp.NSStream || element.Name.Local != "stream" {
 		state.Client.Log.Warn("is no stream")
 		return state
 	}
 	for _, attr := range element.Attr {
 		if attr.Name.Local == "to" {
-			state.Client.JID = &messages.JID{Domain: attr.Value}
+			state.Client.JID = &xmppbase.JID{Domain: attr.Value}
 			state.Client.Log = state.Client.Log.WithField("jid", state.Client.JID.Full())
 		}
 	}
@@ -43,14 +45,14 @@ func (state *Start) Process() State {
 
 	fmt.Fprintf(state.Client.Conn, `<?xml version='1.0'?>
 		<stream:stream id='%x' version='1.0' xmlns='%s' xmlns:stream='%s'>`,
-		messages.CreateCookie(), messages.NSClient, messages.NSStream)
+		xmpp.CreateCookie(), xmpp.NSClient, xmpp.NSStream)
 
 	fmt.Fprintf(state.Client.Conn, `<stream:features>
 			<starttls xmlns='%s'>
 				<required/>
 			</starttls>
 		</stream:features>`,
-		messages.NSStream)
+		xmpp.NSStream)
 
 	return state.Next
 }
@@ -74,11 +76,11 @@ func (state *TLSUpgrade) Process() State {
 		state.Client.Log.Warn("unable to read: ", err)
 		return nil
 	}
-	if element.Name.Space != messages.NSStartTLS || element.Name.Local != "starttls" {
+	if element.Name.Space != xmpp.NSStartTLS || element.Name.Local != "starttls" {
 		state.Client.Log.Warn("is no starttls", element)
 		return nil
 	}
-	fmt.Fprintf(state.Client.Conn, "<proceed xmlns='%s'/>", messages.NSStartTLS)
+	fmt.Fprintf(state.Client.Conn, "<proceed xmlns='%s'/>", xmpp.NSStartTLS)
 	// perform the TLS handshake
 	var tlsConfig *tls.Config
 	if m := state.TLSManager; m != nil {

@@ -1,4 +1,4 @@
-package messages
+package xmppbase
 
 import (
 	"testing"
@@ -13,57 +13,57 @@ func TestNewJID(t *testing.T) {
 
 	checkList := map[string]*JID{
 		"juliet@example.com": {
-			Local:  "juliet",
+			Node:   "juliet",
 			Domain: "example.com",
 		},
 		"juliet@example.com/foo": {
-			Local:    "juliet",
+			Node:     "juliet",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
 		"juliet@example.com/foo bar": {
-			Local:    "juliet",
+			Node:     "juliet",
 			Domain:   "example.com",
 			Resource: "foo bar",
 		},
 		"juliet@example.com/foo@bar": {
-			Local:    "juliet",
+			Node:     "juliet",
 			Domain:   "example.com",
 			Resource: "foo@bar",
 		},
 		"foo\\20bar@example.com": {
-			Local:  "foo\\20bar",
+			Node:   "foo\\20bar",
 			Domain: "example.com",
 		},
 		"fussball@example.com": {
-			Local:  "fussball",
+			Node:   "fussball",
 			Domain: "example.com",
 		},
 		"fu&#xDF;ball@example.com": {
-			Local:  "fu&#xDF;ball",
+			Node:   "fu&#xDF;ball",
 			Domain: "example.com",
 		},
 		"&#x3C0;@example.com": {
-			Local:  "&#x3C0;",
+			Node:   "&#x3C0;",
 			Domain: "example.com",
 		},
 		"&#x3A3;@example.com/foo": {
-			Local:    "&#x3A3;",
+			Node:     "&#x3A3;",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
 		"&#x3C3;@example.com/foo": {
-			Local:    "&#x3C3;",
+			Node:     "&#x3C3;",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
 		"&#x3C2;@example.com/foo": {
-			Local:    "&#x3C2;",
+			Node:     "&#x3C2;",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
 		"king@example.com/&#x265A;": {
-			Local:    "king",
+			Node:     "king",
 			Domain:   "example.com",
 			Resource: "&#x265A;",
 		},
@@ -97,7 +97,7 @@ func TestNewJID(t *testing.T) {
 				continue
 			}
 
-			assert.Equal(jidValid.Local, jid.Local, "the local part was not right detectet:"+jidString)
+			assert.Equal(jidValid.Node, jid.Node, "the local part was not right detectet:"+jidString)
 			assert.Equal(jidValid.Domain, jid.Domain, "the domain part was not right detectet:"+jidString)
 			assert.Equal(jidValid.Resource, jid.Resource, "the resource part was not right detectet:"+jidString)
 			assert.Equal(jidValid.Full(), jidString, "the function full of jid did not work")
@@ -113,11 +113,11 @@ func TestJIDBare(t *testing.T) {
 
 	checkList := map[string]*JID{
 		"aaa@example.com": {
-			Local:  "aaa",
+			Node:   "aaa",
 			Domain: "example.com",
 		},
 		"aab@example.com": {
-			Local:    "aab",
+			Node:     "aab",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
@@ -140,7 +140,7 @@ func TestMarshal(t *testing.T) {
 	err := jid.UnmarshalText([]byte("juliet@example.com/foo"))
 
 	assert.NoError(err)
-	assert.Equal(jid.Local, "juliet")
+	assert.Equal(jid.Node, "juliet")
 	assert.Equal(jid.Domain, "example.com")
 	assert.Equal(jid.Resource, "foo")
 
@@ -149,7 +149,7 @@ func TestMarshal(t *testing.T) {
 	assert.Error(err)
 
 	jid = &JID{
-		Local:    "romeo",
+		Node:     "romeo",
 		Domain:   "example.com",
 		Resource: "bar",
 	}

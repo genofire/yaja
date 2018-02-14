@@ -6,14 +6,15 @@ import (
 	"time"
 
 	"dev.sum7.eu/genofire/yaja/client"
-	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/xmpp"
+	"dev.sum7.eu/genofire/yaja/xmpp/base"
 )
 
 type Status struct {
 	backupClient         *client.Client
 	client               *client.Client
 	account              *Account
-	JID                  *messages.JID     `json:"jid"`
+	JID                  *xmppbase.JID     `json:"jid"`
 	Domain               string            `json:"domain"`
 	Login                bool              `json:"is_online"`
 	MessageForConnection map[string]string `json:"-"`
@@ -35,12 +36,12 @@ func NewStatus(backupClient *client.Client, acc *Account) *Status {
 }
 func (s *Status) Disconnect(reason string) {
 	if s.Login {
-		msg := &messages.MessageClient{
-			Type: messages.MessageTypeChat,
-			Body: fmt.Sprintf("you recieve a notify that '%s' disconnect: %s", s.JID.Full(), reason),
+		msg := &xmpp.MessageClient{
+			Type: xmpp.MessageTypeChat,
+			Body: fmt.Sprintf("you receive a notify that '%s' disconnect: %s", s.JID.Full(), reason),
 		}
 		for jid := range s.account.Admins {
-			msg.To = messages.NewJID(jid)
+			msg.To = xmppbase.NewJID(jid)
 			if err := s.backupClient.Send(msg); err != nil {
 				s.client.Send(msg)
 			}
@@ -58,7 +59,7 @@ func (s *Status) Update(timeout time.Duration) {
 	}
 
 	c := &client.Client{
-		JID:      messages.NewJID(s.account.JID.Bare()),
+		JID:      xmppbase.NewJID(s.account.JID.Bare()),
 		Protocol: "tcp4",
 		Logging:  s.client.Logging,
 		Timeout:  timeout / 2,
@@ -71,7 +72,7 @@ func (s *Status) Update(timeout time.Duration) {
 		s.IPv4 = false
 	}
 
-	c.JID = messages.NewJID(s.account.JID.Bare())
+	c.JID = xmppbase.NewJID(s.account.JID.Bare())
 	c.Protocol = "tcp6"
 
 	if err := c.Connect(s.account.Password); err == nil {

@@ -3,16 +3,16 @@ package client
 import (
 	"fmt"
 
-	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/xmpp"
 )
 
 var DefaultChannelSize = 30
 
 func (client *Client) Start() error {
-	client.iq = make(chan *messages.IQClient, DefaultChannelSize)
-	client.presence = make(chan *messages.PresenceClient, DefaultChannelSize)
-	client.mesage = make(chan *messages.MessageClient, DefaultChannelSize)
-	client.reply = make(map[string]chan *messages.IQClient)
+	client.iq = make(chan *xmpp.IQClient, DefaultChannelSize)
+	client.presence = make(chan *xmpp.PresenceClient, DefaultChannelSize)
+	client.mesage = make(chan *xmpp.MessageClient, DefaultChannelSize)
+	client.reply = make(map[string]chan *xmpp.IQClient)
 
 	for {
 
@@ -21,18 +21,18 @@ func (client *Client) Start() error {
 			return err
 		}
 
-		errMSG := &messages.StreamError{}
+		errMSG := &xmpp.StreamError{}
 		err = client.Decode(errMSG, element)
 		if err == nil {
-			return fmt.Errorf("recv stream error: %s: %s -> %s", errMSG.Text, messages.XMLChildrenString(errMSG.StreamErrorGroup), messages.XMLChildrenString(errMSG.Other))
+			return fmt.Errorf("recv stream error: %s: %s -> %s", errMSG.Text, xmpp.XMLChildrenString(errMSG.StreamErrorGroup), xmpp.XMLChildrenString(errMSG.Other))
 		}
 
-		iq := &messages.IQClient{}
+		iq := &xmpp.IQClient{}
 		err = client.Decode(iq, element)
 		if err == nil {
 			if iq.Ping != nil {
 				client.Logging.Debug("answer ping")
-				iq.Type = messages.IQTypeResult
+				iq.Type = xmpp.IQTypeResult
 				iq.To = iq.From
 				iq.From = client.JID
 				client.Send(iq)
@@ -50,7 +50,7 @@ func (client *Client) Start() error {
 			continue
 		}
 
-		pres := &messages.PresenceClient{}
+		pres := &xmpp.PresenceClient{}
 		err = client.Decode(pres, element)
 		if err == nil {
 			if client.skipError && pres.Error != nil {
@@ -60,7 +60,7 @@ func (client *Client) Start() error {
 			continue
 		}
 
-		msg := &messages.MessageClient{}
+		msg := &xmpp.MessageClient{}
 		err = client.Decode(msg, element)
 		if err == nil {
 			if client.skipError && msg.Error != nil {
@@ -73,25 +73,25 @@ func (client *Client) Start() error {
 	}
 }
 
-func (client *Client) SendRecv(iq *messages.IQClient) *messages.IQClient {
+func (client *Client) SendRecv(iq *xmpp.IQClient) *xmpp.IQClient {
 	if iq.ID == "" {
-		iq.ID = messages.CreateCookieString()
+		iq.ID = xmpp.CreateCookieString()
 	}
-	ch := make(chan *messages.IQClient, 1)
+	ch := make(chan *xmpp.IQClient, 1)
 	client.reply[iq.ID] = ch
 	client.Send(iq)
 	defer close(ch)
 	return <-ch
 }
 
-func (client *Client) RecvIQ() *messages.IQClient {
+func (client *Client) RecvIQ() *xmpp.IQClient {
 	return <-client.iq
 }
 
-func (client *Client) RecvPresence() *messages.PresenceClient {
+func (client *Client) RecvPresence() *xmpp.PresenceClient {
 	return <-client.presence
 }
 
-func (client *Client) RecvMessage() *messages.MessageClient {
+func (client *Client) RecvMessage() *xmpp.MessageClient {
 	return <-client.mesage
 }

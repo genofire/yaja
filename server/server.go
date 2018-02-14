@@ -4,14 +4,15 @@ import (
 	"crypto/tls"
 	"net"
 
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/crypto/acme/autocert"
+
 	"dev.sum7.eu/genofire/yaja/database"
-	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/server/extension"
 	"dev.sum7.eu/genofire/yaja/server/toclient"
 	"dev.sum7.eu/genofire/yaja/server/toserver"
 	"dev.sum7.eu/genofire/yaja/server/utils"
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/crypto/acme/autocert"
+	"dev.sum7.eu/genofire/yaja/xmpp/base"
 )
 
 type Server struct {
@@ -109,7 +110,7 @@ func (srv *Server) handleClient(conn net.Conn) {
 	}
 }
 
-func (srv *Server) DomainRegisterAllowed(jid *messages.JID) bool {
+func (srv *Server) DomainRegisterAllowed(jid *xmppbase.JID) bool {
 	if jid.Domain == "" {
 		return false
 	}

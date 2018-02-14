@@ -7,8 +7,9 @@
 [![chat on our conference room](https://camo.githubusercontent.com/a839cc0a3d4dac7ec82237381b165dd144365b6d/68747470733a2f2f74696e7975726c2e636f6d2f6a6f696e7468656d7563)](https://conversations.im/j/yaja@conference.chat.sum7.eu)
 
 ## Features
-- Messages XML Library (first version - PR are welcome)
-	- Full RFC 6120 (XMPP - Core)
+- XMPP Library (first version - PR are welcome)
+	- RFC 6120 (XMPP - Core)
+	- XEP 0030: Service Discovery
 	- XEP-0199: XMPP Ping
 - Client Library (WIP)
 	-	Stream: TLS Required
@@ -29,11 +30,12 @@
 
 ## Library
 
-### Messages
+### XMPP
 all implementation of all comman (RFCs and XEPs) xml element
 
 **Version**
 - RFC 6120 (XMPP - Core)
+- XEP 0030: Service Discovery
 - XEP-0199: XMPP Ping
 
 ### Client

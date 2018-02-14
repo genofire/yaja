@@ -7,7 +7,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"dev.sum7.eu/genofire/yaja/client"
-	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/xmpp"
+	"dev.sum7.eu/genofire/yaja/xmpp/base"
 )
 
 type Tester struct {
@@ -18,7 +19,7 @@ type Tester struct {
 	mux            sync.Mutex
 	LoggingClients *log.Logger     `json:"-"`
 	LoggingBots    log.Level       `json:"-"`
-	Admins         []*messages.JID `json:"-"`
+	Admins         []*xmppbase.JID `json:"-"`
 }
 
 func NewTester() *Tester {
@@ -88,7 +89,7 @@ func (t *Tester) Connect(acc *Account) {
 	}
 }
 
-func (t *Tester) UpdateConnectionStatus(from, to *messages.JID, recvmsg string) {
+func (t *Tester) UpdateConnectionStatus(from, to *xmppbase.JID, recvmsg string) {
 	logCTX := log.WithFields(log.Fields{
 		"jid":      to.Full(),
 		"from":     from.Full(),
@@ -154,12 +155,12 @@ func (t *Tester) CheckStatus() {
 					logCTXTo.Debug("could not recv msg")
 				}
 			}
-			msg = messages.CreateCookieString()
+			msg = xmpp.CreateCookieString()
 			logCTXTo = logCTXTo.WithField("msg-send", msg)
 
-			own.client.Send(&messages.MessageClient{
+			own.client.Send(&xmpp.MessageClient{
 				Body: "checkmsg " + msg,
-				Type: messages.MessageTypeChat,
+				Type: xmpp.MessageTypeChat,
 				To:   s.JID,
 			})
 			own.MessageForConnection[s.JID.Bare()] = msg

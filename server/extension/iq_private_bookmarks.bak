@@ -3,7 +3,7 @@ package extension
 import (
 	"encoding/xml"
 
-	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/xmpp"
 	"dev.sum7.eu/genofire/yaja/model"
 	"dev.sum7.eu/genofire/yaja/server/utils"
 )
@@ -12,7 +12,7 @@ type IQPrivateBookmark struct {
 	IQExtension
 }
 
-func (ex *IQPrivateBookmark) Handle(msg *messages.IQClient, client *utils.Client) bool {
+func (ex *IQPrivateBookmark) Handle(msg *xmpp.IQClient, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "private").WithField("id", msg.ID)
 
 	// storage encode
@@ -36,10 +36,10 @@ func (ex *IQPrivateBookmark) Handle(msg *messages.IQClient, client *utils.Client
 	}
 
 	// reply
-	client.Messages <- &messages.IQClient{
-		Type: messages.IQTypeResult,
+	client.Messages <- &xmpp.IQClient{
+		Type: xmpp.IQTypeResult,
 		To:   client.JID,
-		From: messages.NewJID(client.JID.Domain),
+		From: xmpp.NewJID(client.JID.Domain),
 		ID:   msg.ID,
 		Body: queryByte,
 	}

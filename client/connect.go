@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"net"
 
-	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/model"
+	"dev.sum7.eu/genofire/yaja/xmpp"
+	"dev.sum7.eu/genofire/yaja/xmpp/base"
 )
 
 func (client *Client) setConnection(conn net.Conn) {
@@ -17,12 +18,12 @@ func (client *Client) setConnection(conn net.Conn) {
 	client.out = xml.NewEncoder(client.conn)
 }
 
-func (client *Client) startStream() (*messages.StreamFeatures, error) {
+func (client *Client) startStream() (*xmpp.StreamFeatures, error) {
 	// XMPP-Connection
 	_, err := fmt.Fprintf(client.conn, "<?xml version='1.0'?>\n"+
 		"<stream:stream to='%s' xmlns='%s'\n"+
 		" xmlns:stream='%s' version='1.0'>\n",
-		model.XMLEscape(client.JID.Domain), messages.NSClient, messages.NSStream)
+		model.XMLEscape(client.JID.Domain), xmpp.NSClient, xmpp.NSStream)
 	if err != nil {
 		return nil, err
 	}
@@ -30,10 +31,10 @@ func (client *Client) startStream() (*messages.StreamFeatures, error) {
 	if err != nil {
 		return nil, err
 	}
-	if element.Name.Space != messages.NSStream || element.Name.Local != "stream" {
+	if element.Name.Space != xmpp.NSStream || element.Name.Local != "stream" {
 		return nil, errors.New("is not stream")
 	}
-	f := &messages.StreamFeatures{}
+	f := &xmpp.StreamFeatures{}
 	if err := client.ReadDecode(f); err != nil {
 		return nil, err
 	}
@@ -63,11 +64,11 @@ func (client *Client) connect(password string) error {
 	if _, err := client.startStream(); err != nil {
 		return err
 	}
-	if err := client.Send(&messages.TLSStartTLS{}); err != nil {
+	if err := client.Send(&xmpp.TLSStartTLS{}); err != nil {
 		return err
 	}
 
-	var p messages.TLSProceed
+	var p xmpp.TLSProceed
 	if err := client.ReadDecode(&p); err != nil {
 		return err
 	}
@@ -97,29 +98,29 @@ func (client *Client) connect(password string) error {
 		if client.JID.Resource != "" {
 			bind.Resource = client.JID.Resource
 		}
-		if err := client.Send(&messages.IQClient{
-			Type: messages.IQTypeSet,
-			To:   messages.NewJID(client.JID.Domain),
+		if err := client.Send(&xmpp.IQClient{
+			Type: xmpp.IQTypeSet,
+			To:   xmppbase.NewJID(client.JID.Domain),
 			Bind: bind,
 		}); err != nil {
 			return err
 		}
 
-		var iq messages.IQClient
+		var iq xmpp.IQClient
 		if err := client.ReadDecode(&iq); err != nil {
 			return err
 		}
 		if iq.Error != nil {
-			return errors.New(fmt.Sprintf("recv error on iq>bind: %s[%s]: %s -> %s -> %s", iq.Error.Code, iq.Error.Type, iq.Error.Text, messages.XMLChildrenString(iq.Error.StanzaErrorGroup), messages.XMLChildrenString(iq.Error.Other)))
+			return errors.New(fmt.Sprintf("recv error on iq>bind: %s[%s]: %s -> %s -> %s", iq.Error.Code, iq.Error.Type, iq.Error.Text, xmpp.XMLChildrenString(iq.Error.StanzaErrorGroup), xmpp.XMLChildrenString(iq.Error.Other)))
 		} else if iq.Bind == nil {
-			return errors.New("iq>bind is nil :" + messages.XMLChildrenString(iq.Other))
+			return errors.New("iq>bind is nil :" + xmpp.XMLChildrenString(iq.Other))
 		}
 		bind = iq.Bind
 	}
 	if bind == nil {
 		return errors.New("bind is nil")
 	} else if bind.JID != nil {
-		client.JID.Local = bind.JID.Local
+		client.JID.Node = bind.JID.Node
 		client.JID.Domain = bind.JID.Domain
 		client.JID.Resource = bind.JID.Resource
 		client.Logging.Infof("set jid by server bind '%s'", bind.JID.Full())
@@ -127,8 +128,8 @@ func (client *Client) connect(password string) error {
 		client.JID.Resource = bind.Resource
 		client.Logging.Infof("set resource by server bind '%s'", bind.Resource)
 	} else {
-		return errors.New("bind>jid is nil" + messages.XMLChildrenString(bind))
+		return errors.New("bind>jid is nil" + xmpp.XMLChildrenString(bind))
 	}
 	// set status
-	return client.Send(&messages.PresenceClient{Show: messages.PresenceShowXA, Status: "online"})
+	return client.Send(&xmpp.PresenceClient{Show: xmpp.PresenceShowXA, Status: "online"})
 }

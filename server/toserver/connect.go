@@ -6,12 +6,13 @@ import (
 	"encoding/xml"
 	"fmt"
 
+	"golang.org/x/crypto/acme/autocert"
+
 	"dev.sum7.eu/genofire/yaja/database"
-	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/server/extension"
 	"dev.sum7.eu/genofire/yaja/server/state"
 	"dev.sum7.eu/genofire/yaja/server/utils"
-	"golang.org/x/crypto/acme/autocert"
+	"dev.sum7.eu/genofire/yaja/xmpp"
 )
 
 // ConnectionStartup return steps through TCP TLS state
@@ -41,7 +42,7 @@ type Dailback struct {
 	Client *utils.Client
 }
 
-// Process messages
+// Process xmpp
 func (state *Dailback) Process() state.State {
 	state.Client.Log = state.Client.Log.WithField("state", "dialback")
 	state.Client.Log.Debug("running")
@@ -73,7 +74,7 @@ type TLSStream struct {
 	domainRegisterAllowed utils.DomainRegisterAllowed
 }
 
-// Process messages
+// Process xmpp
 func (state *TLSStream) Process() state.State {
 	state.Client.Log = state.Client.Log.WithField("state", "tls stream")
 	state.Client.Log.Debug("running")
@@ -84,7 +85,7 @@ func (state *TLSStream) Process() state.State {
 		state.Client.Log.Warn("unable to read: ", err)
 		return nil
 	}
-	if element.Name.Space != messages.NSStream || element.Name.Local != "stream" {
+	if element.Name.Space != xmpp.NSStream || element.Name.Local != "stream" {
 		state.Client.Log.Warn("is no stream")
 		return state
 	}
@@ -97,8 +98,8 @@ func (state *TLSStream) Process() state.State {
 			</mechanisms>
 			<bidi xmlns='urn:xmpp:features:bidi'/>
 		</stream:features>`,
-		messages.CreateCookie(), messages.NSClient, messages.NSStream,
-		messages.NSSASL)
+		xmpp.CreateCookie(), xmpp.NSClient, xmpp.NSStream,
+		xmpp.NSSASL)
 
 	return state.Next
 }
@@ -111,7 +112,7 @@ type SASLAuth struct {
 	domainRegisterAllowed utils.DomainRegisterAllowed
 }
 
-// Process messages
+// Process xmpp
 func (state *SASLAuth) Process() state.State {
 	state.Client.Log = state.Client.Log.WithField("state", "sasl auth")
 	state.Client.Log.Debug("running")
@@ -123,7 +124,7 @@ func (state *SASLAuth) Process() state.State {
 		state.Client.Log.Warn("unable to read: ", err)
 		return nil
 	}
-	var auth messages.SASLAuth
+	var auth xmpp.SASLAuth
 	if err = state.Client.In.DecodeElement(&auth, element); err != nil {
 		return nil
 	}
@@ -136,6 +137,6 @@ func (state *SASLAuth) Process() state.State {
 	state.Client.Log.Debug(auth.Mechanism, string(data))
 
 	state.Client.Log.Info("success auth")
-	fmt.Fprintf(state.Client.Conn, "<success xmlns='%s'/>", messages.NSSASL)
+	fmt.Fprintf(state.Client.Conn, "<success xmlns='%s'/>", xmpp.NSSASL)
 	return state.Next
 }

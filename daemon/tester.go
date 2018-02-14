@@ -11,7 +11,7 @@ import (
 	"dev.sum7.eu/genofire/golang-lib/worker"
 	"dev.sum7.eu/genofire/yaja/client"
 	"dev.sum7.eu/genofire/yaja/daemon/tester"
-	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/xmpp"
 
 	"github.com/spf13/cobra"
 )
@@ -56,7 +56,7 @@ var TesterCMD = &cobra.Command{
 		defer mainClient.Close()
 
 		for _, admin := range configTester.Admins {
-			mainClient.Send(&messages.MessageClient{
+			mainClient.Send(&xmpp.MessageClient{
 				To:   admin,
 				Type: "chat",
 				Body: "yaja tester starts",

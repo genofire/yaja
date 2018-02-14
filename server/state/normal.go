@@ -11,7 +11,7 @@ type SendingClient struct {
 	Client *utils.Client
 }
 
-// Process messages
+// Process xmpp
 func (state *SendingClient) Process() State {
 	state.Client.Log = state.Client.Log.WithField("state", "normal")
 	state.Client.Log.Debug("sending")
@@ -37,7 +37,7 @@ type ReceivingClient struct {
 	Client     *utils.Client
 }
 
-// Process messages
+// Process xmpp
 func (state *ReceivingClient) Process() State {
 	element, err := state.Client.Read()
 	if err != nil {

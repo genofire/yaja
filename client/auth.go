@@ -9,7 +9,7 @@ import (
 	"math/big"
 	"strings"
 
-	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/xmpp"
 )
 
 func (client *Client) auth(password string) error {
@@ -19,8 +19,8 @@ func (client *Client) auth(password string) error {
 	}
 	//auth:
 	mechanism := ""
-	challenge := &messages.SASLChallenge{}
-	response := &messages.SASLResponse{}
+	challenge := &xmpp.SASLChallenge{}
+	response := &xmpp.SASLResponse{}
 	for _, m := range f.Mechanisms.Mechanism {
 		client.Logging.Debugf("try auth with '%s'", m)
 		if m == "SCRAM-SHA-1" {
@@ -34,7 +34,7 @@ func (client *Client) auth(password string) error {
 		if m == "DIGEST-MD5" {
 			mechanism = m
 			// Digest-MD5 authentication
-			client.Send(&messages.SASLAuth{
+			client.Send(&xmpp.SASLAuth{
 				Mechanism: m,
 			})
 			if err := client.ReadDecode(challenge); err != nil {
@@ -61,8 +61,8 @@ func (client *Client) auth(password string) error {
 			cnonceStr := cnonce()
 			digestURI := "xmpp/" + client.JID.Domain
 			nonceCount := fmt.Sprintf("%08x", 1)
-			digest := saslDigestResponse(client.JID.Local, realm, password, nonce, cnonceStr, "AUTHENTICATE", digestURI, nonceCount)
-			message := "username=\"" + client.JID.Local + "\", realm=\"" + realm + "\", nonce=\"" + nonce + "\", cnonce=\"" + cnonceStr +
+			digest := saslDigestResponse(client.JID.Node, realm, password, nonce, cnonceStr, "AUTHENTICATE", digestURI, nonceCount)
+			message := "username=\"" + client.JID.Node + "\", realm=\"" + realm + "\", nonce=\"" + nonce + "\", cnonce=\"" + cnonceStr +
 				"\", nc=" + nonceCount + ", qop=" + qop + ", digest-uri=\"" + digestURI + "\", response=" + digest + ", charset=" + charset
 
 			response.Body = base64.StdEncoding.EncodeToString([]byte(message))
@@ -72,10 +72,10 @@ func (client *Client) auth(password string) error {
 		if m == "PLAIN" {
 			mechanism = m
 			// Plain authentication: send base64-encoded \x00 user \x00 password.
-			raw := "\x00" + client.JID.Local + "\x00" + password
+			raw := "\x00" + client.JID.Node + "\x00" + password
 			enc := make([]byte, base64.StdEncoding.EncodedLen(len(raw)))
 			base64.StdEncoding.Encode(enc, []byte(raw))
-			client.Send(&messages.SASLAuth{
+			client.Send(&xmpp.SASLAuth{
 				Mechanism: "PLAIN",
 				Body:      string(enc),
 			})
@@ -92,14 +92,14 @@ func (client *Client) auth(password string) error {
 	if err != nil {
 		return err
 	}
-	fail := messages.SASLFailure{}
+	fail := xmpp.SASLFailure{}
 	if err := client.Decode(&fail, element); err == nil {
 		if txt := fail.Text; txt != nil {
-			return errors.New(messages.XMLChildrenString(fail) + " : " + txt.Body)
+			return errors.New(xmpp.XMLChildrenString(fail) + " : " + txt.Body)
 		}
-		return errors.New(messages.XMLChildrenString(fail))
+		return errors.New(xmpp.XMLChildrenString(fail))
 	}
-	if err := client.Decode(&messages.SASLSuccess{}, element); err != nil {
+	if err := client.Decode(&xmpp.SASLSuccess{}, element); err != nil {
 		return errors.New("auth failed - with unexpected answer")
 	}
 	return nil

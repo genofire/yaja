@@ -1,46 +1,46 @@
-package messages
+package xmpp
 
 import (
 	"encoding/xml"
 )
 
-// RFC 6120 - A.4 SASL Namespace
+// SASLMechanisms implements RFC 6120 - A.4 SASL Namespace
 type SASLMechanisms struct {
 	XMLName   xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl mechanisms"`
 	Mechanism []string `xml:"mechanism"`
 }
 
-// SASLAuth element
+// SASLAuth implements SASLAuth element
 type SASLAuth struct {
 	XMLName   xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl auth"`
 	Mechanism string   `xml:"mechanism,attr"`
 	Body      string   `xml:",chardata"`
 }
 
-// SASLChallenge element
+// SASLChallenge implements SASLChallenge element
 type SASLChallenge struct {
 	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl challenge"`
 	Body    string   `xml:",chardata"`
 }
 
-// SASLResponse element
+// SASLResponse implements SASLResponse element
 type SASLResponse struct {
 	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl response"`
 	Body    string   `xml:",chardata"`
 }
 
-// SASLSuccess element
+// SASLSuccess implements SASLSuccess element
 type SASLSuccess struct {
 	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl success"`
 	Body    string   `xml:",chardata"`
 }
 
-// SASLAbout element
+// SASLAbout implements SASLAbout element
 type SASLAbout struct {
 	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl abort"`
 }
 
-// RFC 6120 - A.4 SASL Namespace
+// SASLFailure implements RFC 6120 - A.4 SASL Namespace
 type SASLFailure struct {
 	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-sasl failure"`
 

@@ -1,8 +1,9 @@
 package extension
 
 import (
-	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/server/utils"
+	"dev.sum7.eu/genofire/yaja/xmpp"
+	"dev.sum7.eu/genofire/yaja/xmpp/base"
 )
 
 type IQPing struct {
@@ -11,7 +12,7 @@ type IQPing struct {
 
 func (ex *IQPing) Spaces() []string { return []string{"urn:xmpp:ping"} }
 
-func (ex *IQPing) Get(msg *messages.IQClient, client *utils.Client) bool {
+func (ex *IQPing) Get(msg *xmpp.IQClient, client *utils.Client) bool {
 	log := client.Log.WithField("extension", "ping").WithField("id", msg.ID)
 
 	if msg.Ping == nil {
@@ -19,10 +20,10 @@ func (ex *IQPing) Get(msg *messages.IQClient, client *utils.Client) bool {
 	}
 
 	// reply
-	client.Messages <- &messages.IQClient{
-		Type: messages.IQTypeResult,
+	client.Messages <- &xmpp.IQClient{
+		Type: xmpp.IQTypeResult,
 		To:   client.JID,
-		From: messages.NewJID(client.JID.Domain),
+		From: xmppbase.NewJID(client.JID.Domain),
 		ID:   msg.ID,
 	}
 

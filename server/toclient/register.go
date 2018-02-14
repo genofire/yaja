@@ -4,10 +4,12 @@ import (
 	"encoding/xml"
 
 	"dev.sum7.eu/genofire/yaja/database"
-	"dev.sum7.eu/genofire/yaja/messages"
 	"dev.sum7.eu/genofire/yaja/model"
 	"dev.sum7.eu/genofire/yaja/server/state"
 	"dev.sum7.eu/genofire/yaja/server/utils"
+	"dev.sum7.eu/genofire/yaja/xmpp"
+	"dev.sum7.eu/genofire/yaja/xmpp/base"
+	"dev.sum7.eu/genofire/yaja/xmpp/iq"
 )
 
 type RegisterFormRequest struct {
@@ -28,12 +30,12 @@ func (state *RegisterFormRequest) Process() state.State {
 		return nil
 	}
 
-	var msg messages.IQClient
+	var msg xmpp.IQClient
 	if err := state.Client.In.DecodeElement(&msg, state.element); err != nil {
 		state.Client.Log.Warn("is no iq: ", err)
 		return state
 	}
-	if msg.Type != messages.IQTypeGet {
+	if msg.Type != xmpp.IQTypeGet {
 		state.Client.Log.Warn("is no get iq")
 		return state
 	}
@@ -46,12 +48,12 @@ func (state *RegisterFormRequest) Process() state.State {
 		state.Client.Log.Warn("is no iq register")
 		return nil
 	}
-	state.Client.Out.Encode(&messages.IQClient{
-		Type: messages.IQTypeResult,
+	state.Client.Out.Encode(&xmpp.IQClient{
+		Type: xmpp.IQTypeResult,
 		To:   state.Client.JID,
-		From: messages.NewJID(state.Client.JID.Domain),
+		From: xmppbase.NewJID(state.Client.JID.Domain),
 		ID:   msg.ID,
-		PrivateRegister: &messages.IQPrivateRegister{
+		PrivateRegister: &xmppiq.IQPrivateRegister{
 			Instructions: "Choose a username and password for use with this service.",
 			Username:     "",
 			Password:     "",
@@ -83,12 +85,12 @@ func (state *RegisterRequest) Process() state.State {
 		state.Client.Log.Warn("unable to read: ", err)
 		return nil
 	}
-	var msg messages.IQClient
+	var msg xmpp.IQClient
 	if err = state.Client.In.DecodeElement(&msg, element); err != nil {
 		state.Client.Log.Warn("is no iq: ", err)
 		return state
 	}
-	if msg.Type != messages.IQTypeGet {
+	if msg.Type != xmpp.IQTypeGet {
 		state.Client.Log.Warn("is no get iq")
 		return state
 	}
@@ -101,21 +103,21 @@ func (state *RegisterRequest) Process() state.State {
 		return nil
 	}
 
-	state.Client.JID.Local = msg.PrivateRegister.Username
+	state.Client.JID.Node = msg.PrivateRegister.Username
 	state.Client.Log = state.Client.Log.WithField("jid", state.Client.JID.Full())
 	account := model.NewAccount(state.Client.JID, msg.PrivateRegister.Password)
 	err = state.database.AddAccount(account)
 	if err != nil {
-		state.Client.Out.Encode(&messages.IQClient{
-			Type:            messages.IQTypeResult,
+		state.Client.Out.Encode(&xmpp.IQClient{
+			Type:            xmpp.IQTypeResult,
 			To:              state.Client.JID,
-			From:            messages.NewJID(state.Client.JID.Domain),
+			From:            xmppbase.NewJID(state.Client.JID.Domain),
 			ID:              msg.ID,
 			PrivateRegister: msg.PrivateRegister,
-			Error: &messages.ErrorClient{
+			Error: &xmpp.ErrorClient{
 				Code: "409",
 				Type: "cancel",
-				StanzaErrorGroup: messages.StanzaErrorGroup{
+				StanzaErrorGroup: xmpp.StanzaErrorGroup{
 					Conflict: &xml.Name{},
 				},
 			},
@@ -123,10 +125,10 @@ func (state *RegisterRequest) Process() state.State {
 		state.Client.Log.Warn("database error: ", err)
 		return state
 	}
-	state.Client.Out.Encode(&messages.IQClient{
-		Type: messages.IQTypeResult,
+	state.Client.Out.Encode(&xmpp.IQClient{
+		Type: xmpp.IQTypeResult,
 		To:   state.Client.JID,
-		From: messages.NewJID(state.Client.JID.Domain),
+		From: xmppbase.NewJID(state.Client.JID.Domain),
 		ID:   msg.ID,
 	})
 

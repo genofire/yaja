@@ -4,9 +4,10 @@ import (
 	"encoding/xml"
 	"net"
 
-	"dev.sum7.eu/genofire/yaja/messages"
-	"dev.sum7.eu/genofire/yaja/model"
 	log "github.com/sirupsen/logrus"
+
+	"dev.sum7.eu/genofire/yaja/model"
+	"dev.sum7.eu/genofire/yaja/xmpp/base"
 )
 
 type Client struct {
@@ -16,7 +17,7 @@ type Client struct {
 	Out  *xml.Encoder
 	In   *xml.Decoder
 
-	JID     *messages.JID
+	JID     *xmppbase.JID
 	account *model.Account
 
 	Messages chan interface{}

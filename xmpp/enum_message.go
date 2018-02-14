@@ -1,5 +1,6 @@
-package messages
+package xmpp
 
+// MessageType is a Enum of message attribute type
 type MessageType string
 
 // RFC 6120 part of A.5 Client Namespace and A.6 Server Namespace

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"dev.sum7.eu/genofire/yaja/messages"
+	"dev.sum7.eu/genofire/yaja/xmpp/base"
 )
 
 type Domain struct {
@@ -13,37 +13,37 @@ type Domain struct {
 	sync.Mutex
 }
 
-func (d *Domain) GetJID() *messages.JID {
-	return &messages.JID{
+func (d *Domain) GetJID() *xmppbase.JID {
+	return &xmppbase.JID{
 		Domain: d.FQDN,
 	}
 }
 
 func (d *Domain) UpdateAccount(a *Account) error {
-	if a.Local == "" {
+	if a.Node == "" {
 		return errors.New("No localpart exists in account")
 	}
 	d.Lock()
-	d.Accounts[a.Local] = a
+	d.Accounts[a.Node] = a
 	d.Unlock()
 	a.Domain = d
 	return nil
 }
 
 type Account struct {
-	Local     string               `json:"-"`
+	Node      string               `json:"-"`
 	Domain    *Domain              `json:"-"`
 	Password  string               `json:"password"`
 	Roster    map[string]*Buddy    `json:"roster"`
 	Bookmarks map[string]*Bookmark `json:"bookmarks"`
 }
 
-func NewAccount(jid *messages.JID, password string) *Account {
+func NewAccount(jid *xmppbase.JID, password string) *Account {
 	if jid == nil {
 		return nil
 	}
 	return &Account{
-		Local: jid.Local,
+		Node: jid.Node,
 		Domain: &Domain{
 			FQDN: jid.Domain,
 		},
@@ -51,10 +51,10 @@ func NewAccount(jid *messages.JID, password string) *Account {
 	}
 }
 
-func (a *Account) GetJID() *messages.JID {
-	return &messages.JID{
+func (a *Account) GetJID() *xmppbase.JID {
+	return &xmppbase.JID{
 		Domain: a.Domain.FQDN,
-		Local:  a.Local,
+		Node:   a.Node,
 	}
 }
 
