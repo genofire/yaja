@@ -8,11 +8,12 @@ import (
 
 // StreamFeatures implements RFC 6120 - A.1 Stream Namespace
 type StreamFeatures struct {
-	XMLName    xml.Name `xml:"http://etherx.jabber.org/streams features"`
-	StartTLS   *TLSStartTLS
-	Mechanisms SASLMechanisms
-	Bind       *Bind
-	Session    bool
+	XMLName     xml.Name `xml:"http://etherx.jabber.org/streams features"`
+	StartTLS    *TLSStartTLS
+	Mechanisms  SASLMechanisms      // RFC 6120 - A.4 SASL Namespace (see sasl.go)
+	Compression *CompressionFeature // XEP-0138: Stream Compression (see compression.go)
+	Bind        *Bind
+	Session     bool
 }
 
 // TLSStartTLS implements RFC 6120 - A.3 StartTLS Namespace

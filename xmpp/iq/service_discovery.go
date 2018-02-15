@@ -6,37 +6,37 @@ import (
 	"dev.sum7.eu/genofire/yaja/xmpp/base"
 )
 
-// IQDiscoQueryInfo implements XEP 0030: Service Discovery - 11.1 disco#info
-type IQDiscoQueryInfo struct {
+// DiscoQueryInfo implements XEP 0030: Service Discovery - 11.1 disco#info
+type DiscoQueryInfo struct {
 	XMLName    xml.Name `xml:"http://jabber.org/protocol/disco#info query"`
 	Node       *string  `xml:"node,attr"`
-	Identities []*IQDiscoIdentity
-	Features   []*IQDiscoFeature
+	Identities []*DiscoIdentity
+	Features   []*DiscoFeature
 }
 
-// IQDiscoIdentity implements XEP 0030: Service Discovery - 11.1 disco#info
-type IQDiscoIdentity struct {
+// DiscoIdentity implements XEP 0030: Service Discovery - 11.1 disco#info
+type DiscoIdentity struct {
 	XMLName  xml.Name `xml:"http://jabber.org/protocol/disco#info identity"`
 	Category string   `xml:"category"` //required
 	Name     *string  `xml:"name"`
 	Type     string   `xml:"type"` //required
 }
 
-// IQDiscoFeature implements XEP 0030: Service Discovery - 11.1 disco#info
-type IQDiscoFeature struct {
+// DiscoFeature implements XEP 0030: Service Discovery - 11.1 disco#info
+type DiscoFeature struct {
 	XMLName xml.Name `xml:"http://jabber.org/protocol/disco#info feature"`
 	Var     string   `xml:"var"` //required
 }
 
-// IQDiscoQueryItem implements XEP 0030: Service Discovery - 11.2 disco#items
-type IQDiscoQueryItem struct {
+// DiscoQueryItem implements XEP 0030: Service Discovery - 11.2 disco#items
+type DiscoQueryItem struct {
 	XMLName xml.Name `xml:"http://jabber.org/protocol/disco#items query"`
 	Node    *string  `xml:"node,attr"`
-	Items   []*IQDiscoItem
+	Items   []*DiscoItem
 }
 
-// IQDiscoItem implements XEP 0030: Service Discovery - 11.2 disco#items
-type IQDiscoItem struct {
+// DiscoItem implements XEP 0030: Service Discovery - 11.2 disco#items
+type DiscoItem struct {
 	XMLName xml.Name      `xml:"http://jabber.org/protocol/disco#items item"`
 	JID     *xmppbase.JID `xml:"jid"`
 	Node    *string       `xml:"node"`

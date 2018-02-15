@@ -8,9 +8,6 @@
 
 ## Features
 - XMPP Library (first version - PR are welcome)
-	- RFC 6120 (XMPP - Core)
-	- XEP 0030: Service Discovery
-	- XEP-0199: XMPP Ping
 - Client Library (WIP)
 	-	Stream: TLS Required
 		- SASL-Auth (PLAIN, DIGEST-MD5)
@@ -34,9 +31,12 @@
 all implementation of all comman (RFCs and XEPs) xml element
 
 **Version**
-- RFC 6120 (XMPP - Core)
-- XEP 0030: Service Discovery
-- XEP-0199: XMPP Ping
+- [RFC 6120 (XMPP - Core)](https://xmpp.org/rfcs/rfc3920.html)
+- [XEP 0030: Service Discovery](https://xmpp.org/extensions/xep-0030.html)
+- [XEP-0049: Private XML Storage](https://xmpp.org/extensions/xep-0049.html)
+- [XEP-0092: Software Version](https://xmpp.org/extensions/xep-0092.html)
+- [XEP-0138: Stream Compression](https://xmpp.org/extensions/xep-0138.html)
+- [XEP-0199: XMPP Ping](https://xmpp.org/extensions/xep-0199.html)
 
 ### Client
 
