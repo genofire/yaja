@@ -76,7 +76,7 @@ func (state *TLSStream) Process() state.State {
 				</mechanisms>
 			</stream:features>`,
 			xmpp.CreateCookie(), xmpp.NSClient, xmpp.NSStream,
-			xmpp.NSSASL, xmppiq.NSFeaturesIQRegister)
+			xmpp.NSSASL, xmppiq.NSFeatureRegister)
 	} else {
 		fmt.Fprintf(state.Client.Conn, `<?xml version='1.0'?>
 			<stream:stream id='%x' version='1.0' xmlns='%s' xmlns:stream='%s'>
@@ -134,7 +134,7 @@ func (state *SASLAuth) Process() state.State {
 	}
 	info := strings.Split(string(data), "\x00")
 	// should check that info[1] starts with state.Client.JID
-	state.Client.JID.Node = info[1]
+	state.Client.JID.Local = info[1]
 	state.Client.Log = state.Client.Log.WithField("jid", state.Client.JID.Full())
 	success, err := state.database.Authenticate(state.Client.JID, info[2])
 	if err != nil {

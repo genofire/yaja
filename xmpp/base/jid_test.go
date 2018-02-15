@@ -13,57 +13,57 @@ func TestNewJID(t *testing.T) {
 
 	checkList := map[string]*JID{
 		"juliet@example.com": {
-			Node:   "juliet",
+			Local:  "juliet",
 			Domain: "example.com",
 		},
 		"juliet@example.com/foo": {
-			Node:     "juliet",
+			Local:    "juliet",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
 		"juliet@example.com/foo bar": {
-			Node:     "juliet",
+			Local:    "juliet",
 			Domain:   "example.com",
 			Resource: "foo bar",
 		},
 		"juliet@example.com/foo@bar": {
-			Node:     "juliet",
+			Local:    "juliet",
 			Domain:   "example.com",
 			Resource: "foo@bar",
 		},
 		"foo\\20bar@example.com": {
-			Node:   "foo\\20bar",
+			Local:  "foo\\20bar",
 			Domain: "example.com",
 		},
 		"fussball@example.com": {
-			Node:   "fussball",
+			Local:  "fussball",
 			Domain: "example.com",
 		},
 		"fu&#xDF;ball@example.com": {
-			Node:   "fu&#xDF;ball",
+			Local:  "fu&#xDF;ball",
 			Domain: "example.com",
 		},
 		"&#x3C0;@example.com": {
-			Node:   "&#x3C0;",
+			Local:  "&#x3C0;",
 			Domain: "example.com",
 		},
 		"&#x3A3;@example.com/foo": {
-			Node:     "&#x3A3;",
+			Local:    "&#x3A3;",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
 		"&#x3C3;@example.com/foo": {
-			Node:     "&#x3C3;",
+			Local:    "&#x3C3;",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
 		"&#x3C2;@example.com/foo": {
-			Node:     "&#x3C2;",
+			Local:    "&#x3C2;",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
 		"king@example.com/&#x265A;": {
-			Node:     "king",
+			Local:    "king",
 			Domain:   "example.com",
 			Resource: "&#x265A;",
 		},
@@ -97,10 +97,10 @@ func TestNewJID(t *testing.T) {
 				continue
 			}
 
-			assert.Equal(jidValid.Node, jid.Node, "the local part was not right detectet:"+jidString)
+			assert.Equal(jidValid.Local, jid.Local, "the local part was not right detectet:"+jidString)
 			assert.Equal(jidValid.Domain, jid.Domain, "the domain part was not right detectet:"+jidString)
 			assert.Equal(jidValid.Resource, jid.Resource, "the resource part was not right detectet:"+jidString)
-			assert.Equal(jidValid.Full(), jidString, "the function full of jid did not work")
+			assert.Equal(jidValid.Full().String(), jidString, "the function full of jid did not work")
 		} else {
 			assert.Nil(jid, "this should not be a valid JID:"+jidString)
 		}
@@ -113,11 +113,11 @@ func TestJIDBare(t *testing.T) {
 
 	checkList := map[string]*JID{
 		"aaa@example.com": {
-			Node:   "aaa",
+			Local:  "aaa",
 			Domain: "example.com",
 		},
 		"aab@example.com": {
-			Node:     "aab",
+			Local:    "aab",
 			Domain:   "example.com",
 			Resource: "foo",
 		},
@@ -127,10 +127,32 @@ func TestJIDBare(t *testing.T) {
 		},
 	}
 	for jidValid, jid := range checkList {
-		jidBase := jid.Bare()
+		jidBase := jid.Bare().String()
 		assert.Equal(jidValid, jidBase)
-
 	}
+	// check nil value
+	var jid *JID
+	assert.Equal("", jid.Bare().String())
+}
+
+func TestClone(t *testing.T) {
+	assert := assert.New(t)
+
+	var jid *JID
+	cloneJID := jid.Clone()
+	assert.Nil(jid)
+	assert.Nil(cloneJID)
+
+	originString := "bot@example.org"
+
+	jid = NewJID(originString)
+	cloneJID = jid.Clone()
+	cloneJID.Resource = "notebook"
+
+	assert.Equal(originString, jid.String())
+	assert.NotEqual(cloneJID.String(), jid.String())
+	assert.Equal(cloneJID.Bare().String(), jid.String())
+
 }
 
 func TestMarshal(t *testing.T) {
@@ -140,7 +162,7 @@ func TestMarshal(t *testing.T) {
 	err := jid.UnmarshalText([]byte("juliet@example.com/foo"))
 
 	assert.NoError(err)
-	assert.Equal(jid.Node, "juliet")
+	assert.Equal(jid.Local, "juliet")
 	assert.Equal(jid.Domain, "example.com")
 	assert.Equal(jid.Resource, "foo")
 
@@ -149,7 +171,7 @@ func TestMarshal(t *testing.T) {
 	assert.Error(err)
 
 	jid = &JID{
-		Node:     "romeo",
+		Local:    "romeo",
 		Domain:   "example.com",
 		Resource: "bar",
 	}

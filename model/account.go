@@ -20,18 +20,18 @@ func (d *Domain) GetJID() *xmppbase.JID {
 }
 
 func (d *Domain) UpdateAccount(a *Account) error {
-	if a.Node == "" {
+	if a.Local == "" {
 		return errors.New("No localpart exists in account")
 	}
 	d.Lock()
-	d.Accounts[a.Node] = a
+	d.Accounts[a.Local] = a
 	d.Unlock()
 	a.Domain = d
 	return nil
 }
 
 type Account struct {
-	Node      string               `json:"-"`
+	Local     string               `json:"-"`
 	Domain    *Domain              `json:"-"`
 	Password  string               `json:"password"`
 	Roster    map[string]*Buddy    `json:"roster"`
@@ -43,7 +43,7 @@ func NewAccount(jid *xmppbase.JID, password string) *Account {
 		return nil
 	}
 	return &Account{
-		Node: jid.Node,
+		Local: jid.Local,
 		Domain: &Domain{
 			FQDN: jid.Domain,
 		},
@@ -54,7 +54,7 @@ func NewAccount(jid *xmppbase.JID, password string) *Account {
 func (a *Account) GetJID() *xmppbase.JID {
 	return &xmppbase.JID{
 		Domain: a.Domain.FQDN,
-		Node:   a.Node,
+		Local:  a.Local,
 	}
 }
 

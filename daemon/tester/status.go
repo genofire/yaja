@@ -59,7 +59,7 @@ func (s *Status) Update(timeout time.Duration) {
 	}
 
 	c := &client.Client{
-		JID:      xmppbase.NewJID(s.account.JID.Bare()),
+		JID:      s.account.JID.Bare(),
 		Protocol: "tcp4",
 		Logging:  s.client.Logging,
 		Timeout:  timeout / 2,
@@ -72,7 +72,7 @@ func (s *Status) Update(timeout time.Duration) {
 		s.IPv4 = false
 	}
 
-	c.JID = xmppbase.NewJID(s.account.JID.Bare())
+	c.JID = s.account.JID.Bare()
 	c.Protocol = "tcp6"
 
 	if err := c.Connect(s.account.Password); err == nil {

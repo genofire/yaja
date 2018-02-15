@@ -44,7 +44,7 @@ func (t *Tester) Start(mainClient *client.Client, password string) {
 	t.mux.Lock()
 	defer t.mux.Unlock()
 
-	t.Status[mainClient.JID.Bare()] = status
+	t.Status[mainClient.JID.Bare().String()] = status
 	go t.StartBot(status)
 
 	for _, acc := range t.Accounts {
@@ -58,11 +58,12 @@ func (t *Tester) Close() {
 }
 
 func (t *Tester) Connect(acc *Account) {
-	logCTX := log.WithField("jid", acc.JID.Full())
-	status, ok := t.Status[acc.JID.Bare()]
+	logCTX := log.WithField("jid", acc.JID.Full().String())
+	bare := acc.JID.Bare().String()
+	status, ok := t.Status[bare]
 	if !ok {
 		status = NewStatus(t.mainClient, acc)
-		t.Status[acc.JID.Bare()] = status
+		t.Status[bare] = status
 	} else if status.JID == nil {
 		status.JID = acc.JID
 	}
@@ -99,19 +100,20 @@ func (t *Tester) UpdateConnectionStatus(from, to *xmppbase.JID, recvmsg string) 
 	t.mux.Lock()
 	defer t.mux.Unlock()
 
-	status, ok := t.Status[from.Bare()]
+	status, ok := t.Status[from.Bare().String()]
 	if !ok {
 		logCTX.Warn("recv msg without receiver")
 		return
 	}
-	msg, ok := status.MessageForConnection[to.Bare()]
+	toBare := to.Bare().String()
+	msg, ok := status.MessageForConnection[toBare]
 	logCTX = logCTX.WithField("msg-send", msg)
 	if !ok || msg != recvmsg || msg == "" || recvmsg == "" {
 		logCTX.Warn("recv wrong msg")
 		return
 	}
-	delete(status.MessageForConnection, to.Bare())
-	status.Connections[to.Bare()] = true
+	delete(status.MessageForConnection, toBare)
+	status.Connections[toBare] = true
 	logCTX.Info("recv msg")
 
 }
@@ -163,7 +165,7 @@ func (t *Tester) CheckStatus() {
 				Type: xmpp.MessageTypeChat,
 				To:   s.JID,
 			})
-			own.MessageForConnection[s.JID.Bare()] = msg
+			own.MessageForConnection[s.JID.Bare().String()] = msg
 			logCTXTo.Debug("test send")
 			send++
 		}

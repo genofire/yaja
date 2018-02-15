@@ -120,7 +120,7 @@ func (client *Client) connect(password string) error {
 	if bind == nil {
 		return errors.New("bind is nil")
 	} else if bind.JID != nil {
-		client.JID.Node = bind.JID.Node
+		client.JID.Local = bind.JID.Local
 		client.JID.Domain = bind.JID.Domain
 		client.JID.Resource = bind.JID.Resource
 		client.Logging.Infof("set jid by server bind '%s'", bind.JID.Full())

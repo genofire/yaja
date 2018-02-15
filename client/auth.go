@@ -61,8 +61,8 @@ func (client *Client) auth(password string) error {
 			cnonceStr := cnonce()
 			digestURI := "xmpp/" + client.JID.Domain
 			nonceCount := fmt.Sprintf("%08x", 1)
-			digest := saslDigestResponse(client.JID.Node, realm, password, nonce, cnonceStr, "AUTHENTICATE", digestURI, nonceCount)
-			message := "username=\"" + client.JID.Node + "\", realm=\"" + realm + "\", nonce=\"" + nonce + "\", cnonce=\"" + cnonceStr +
+			digest := saslDigestResponse(client.JID.Local, realm, password, nonce, cnonceStr, "AUTHENTICATE", digestURI, nonceCount)
+			message := "username=\"" + client.JID.Local + "\", realm=\"" + realm + "\", nonce=\"" + nonce + "\", cnonce=\"" + cnonceStr +
 				"\", nc=" + nonceCount + ", qop=" + qop + ", digest-uri=\"" + digestURI + "\", response=" + digest + ", charset=" + charset
 
 			response.Body = base64.StdEncoding.EncodeToString([]byte(message))
@@ -72,7 +72,7 @@ func (client *Client) auth(password string) error {
 		if m == "PLAIN" {
 			mechanism = m
 			// Plain authentication: send base64-encoded \x00 user \x00 password.
-			raw := "\x00" + client.JID.Node + "\x00" + password
+			raw := "\x00" + client.JID.Local + "\x00" + password
 			enc := make([]byte, base64.StdEncoding.EncodedLen(len(raw)))
 			base64.StdEncoding.Encode(enc, []byte(raw))
 			client.Send(&xmpp.SASLAuth{

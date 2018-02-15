@@ -57,17 +57,17 @@ func (t *Tester) Output() *Output {
 			toJID := xmppbase.NewJID(to)
 			link := &Link{
 				Source:     status.JID.Domain,
-				SourceJID:  status.JID.Bare(),
+				SourceJID:  status.JID.Bare().String(),
 				Target:     toJID.Domain,
-				TargetJID:  toJID.Bare(),
+				TargetJID:  toJID.Bare().String(),
 				FromSource: linkOK,
 				FromTarget: false,
 			}
 			if switchSourceTarget {
 				link.Source = toJID.Domain
-				link.SourceJID = toJID.Bare()
+				link.SourceJID = toJID.Bare().String()
 				link.Target = status.JID.Domain
-				link.TargetJID = status.JID.Bare()
+				link.TargetJID = status.JID.Bare().String()
 				link.FromSource = false
 				link.FromTarget = linkOK
 			}

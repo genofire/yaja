@@ -44,7 +44,7 @@ func (state *RegisterFormRequest) Process() state.State {
 		return state
 	}
 
-	if msg.PrivateRegister == nil {
+	if msg.Register == nil {
 		state.Client.Log.Warn("is no iq register")
 		return nil
 	}
@@ -53,7 +53,7 @@ func (state *RegisterFormRequest) Process() state.State {
 		To:   state.Client.JID,
 		From: xmppbase.NewJID(state.Client.JID.Domain),
 		ID:   msg.ID,
-		PrivateRegister: &xmppiq.IQPrivateRegister{
+		Register: &xmppiq.Register{
 			Instructions: "Choose a username and password for use with this service.",
 			Username:     "",
 			Password:     "",
@@ -98,22 +98,22 @@ func (state *RegisterRequest) Process() state.State {
 		state.Client.Log.Warn("iq with error: ", msg.Error.Code)
 		return state
 	}
-	if msg.PrivateRegister == nil {
+	if msg.Register == nil {
 		state.Client.Log.Warn("is no iq register: ", err)
 		return nil
 	}
 
-	state.Client.JID.Node = msg.PrivateRegister.Username
+	state.Client.JID.Local = msg.Register.Username
 	state.Client.Log = state.Client.Log.WithField("jid", state.Client.JID.Full())
-	account := model.NewAccount(state.Client.JID, msg.PrivateRegister.Password)
+	account := model.NewAccount(state.Client.JID, msg.Register.Password)
 	err = state.database.AddAccount(account)
 	if err != nil {
 		state.Client.Out.Encode(&xmpp.IQClient{
-			Type:            xmpp.IQTypeResult,
-			To:              state.Client.JID,
-			From:            xmppbase.NewJID(state.Client.JID.Domain),
-			ID:              msg.ID,
-			PrivateRegister: msg.PrivateRegister,
+			Type:     xmpp.IQTypeResult,
+			To:       state.Client.JID,
+			From:     xmppbase.NewJID(state.Client.JID.Domain),
+			ID:       msg.ID,
+			Register: msg.Register,
 			Error: &xmpp.ErrorClient{
 				Code: "409",
 				Type: "cancel",

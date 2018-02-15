@@ -16,7 +16,7 @@ type State struct {
 }
 
 func (s *State) AddAccount(a *model.Account) error {
-	if a.Node == "" {
+	if a.Local == "" {
 		return errors.New("No localpart exists in account")
 	}
 	if d := a.Domain; d != nil {
@@ -39,11 +39,11 @@ func (s *State) AddAccount(a *model.Account) error {
 		if domain.Accounts == nil {
 			domain.Accounts = make(map[string]*model.Account)
 		}
-		_, ok = domain.Accounts[a.Node]
+		_, ok = domain.Accounts[a.Local]
 		if ok {
 			return errors.New("exists already")
 		}
-		domain.Accounts[a.Node] = a
+		domain.Accounts[a.Local] = a
 		a.Domain = d
 		return nil
 	}
@@ -54,7 +54,7 @@ func (s *State) Authenticate(jid *xmppbase.JID, password string) (bool, error) {
 	logger := log.WithField("database", "auth")
 
 	if domain, ok := s.Domains[jid.Domain]; ok {
-		if acc, ok := domain.Accounts[jid.Node]; ok {
+		if acc, ok := domain.Accounts[jid.Local]; ok {
 			if acc.ValidatePassword(password) {
 				return true, nil
 			} else {
@@ -73,7 +73,7 @@ func (s *State) GetAccount(jid *xmppbase.JID) *model.Account {
 	logger := log.WithField("database", "get")
 
 	if domain, ok := s.Domains[jid.Domain]; ok {
-		if acc, ok := domain.Accounts[jid.Node]; ok {
+		if acc, ok := domain.Accounts[jid.Local]; ok {
 			return acc
 		} else {
 			logger.Debug("account not found")

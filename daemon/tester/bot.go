@@ -110,21 +110,22 @@ func (t *Tester) StartBot(status *Status) {
 			first := true
 			allAdmins := ""
 			isAdmin := false
+			fromBare := msg.From
 			for _, jid := range botAllowed(t.Admins, status.account.Admins) {
 				if first {
 					first = false
-					allAdmins += jid.Bare()
 				} else {
-					allAdmins += ", " + jid.Bare()
+					allAdmins += ", "
 				}
-				if jid.Bare() == msg.From.Bare() {
+				allAdmins += jid.Bare().String()
+				if jid.Bare().IsEqual(fromBare) {
 					isAdmin = true
-					status.client.Send(xmpp.MessageClient{Type: msg.Type, To: jid, Body: "last message, disconnect requested by " + msg.From.Bare()})
+					status.client.Send(xmpp.MessageClient{Type: msg.Type, To: jid, Body: "last message, disconnect requested by " + fromBare.String()})
 
 				}
 			}
 			if isAdmin {
-				status.Disconnect(fmt.Sprintf("disconnect by admin '%s'", msg.From.Bare()))
+				status.Disconnect(fmt.Sprintf("disconnect by admin '%s'", fromBare.String()))
 				return
 			}
 			status.client.Send(xmpp.MessageClient{Type: msg.Type, To: msg.From, Body: "not allowed, ask " + allAdmins})
