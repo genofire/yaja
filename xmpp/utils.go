@@ -22,22 +22,13 @@ func XMLStartElementToString(element *xml.StartElement) string {
 
 func XMLChildrenString(o interface{}) (result string) {
 	val := reflect.ValueOf(o)
-	if val.Kind() == reflect.Interface && !val.IsNil() {
-		elm := val.Elem()
-		if elm.Kind() == reflect.Ptr && !elm.IsNil() && elm.Elem().Kind() == reflect.Ptr {
-			val = elm
-		}
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
 	}
 	if val.Kind() == reflect.Struct {
 		first := true
 		for i := 0; i < val.NumField(); i++ {
 			valueField := val.Field(i)
-			if valueField.Kind() == reflect.Interface && !valueField.IsNil() {
-				elm := valueField.Elem()
-				if elm.Kind() == reflect.Ptr && !elm.IsNil() && elm.Elem().Kind() == reflect.Ptr {
-					valueField = elm
-				}
-			}
 
 			if xmlElement, ok := valueField.Interface().(*xml.Name); ok && xmlElement != nil {
 				if first {

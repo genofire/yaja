@@ -9,5 +9,5 @@ type Version struct {
 	XMLName xml.Name `xml:"jabber:iq:version query"`
 	Name    string   `xml:"name"`    //required
 	Version string   `xml:"version"` //required
-	OS      *string  `xml:"os"`
+	OS      string   `xml:"os,omitempty"`
 }

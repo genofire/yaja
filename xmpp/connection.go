@@ -19,7 +19,7 @@ type StreamFeatures struct {
 // TLSStartTLS implements RFC 6120 - A.3 StartTLS Namespace
 type TLSStartTLS struct {
 	XMLName  xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-tls starttls"`
-	Required *string  `xml:"required"`
+	Required string   `xml:"required,omitempty"`
 }
 
 // TLSProceed implements RFC 6120 - A.3 StartTLS Namespace

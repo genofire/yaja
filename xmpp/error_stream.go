@@ -23,7 +23,7 @@ type StreamErrorGroup struct {
 	Reset                  *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-streams reset"`
 	ResourceConstraint     *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-streams resource-constraint"`
 	RestrictedXML          *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-streams restricted-xml"`
-	SeeOtherHost           string    `xml:"urn:ietf:params:xml:ns:xmpp-streams see-other-host"`
+	SeeOtherHost           string    `xml:"urn:ietf:params:xml:ns:xmpp-streams see-other-host,omitempty"`
 	SystemShutdown         *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-streams system-shutdown"`
 	UndefinedCondition     *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-streams undefined-condition"`
 	UnsupportedEncoding    *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-streams unsupported-encoding"`
