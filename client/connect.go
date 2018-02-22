@@ -19,6 +19,7 @@ func (client *Client) setConnection(conn net.Conn) {
 }
 
 func (client *Client) startStream() (*xmpp.StreamFeatures, error) {
+	logCTX := client.Logging.WithField("type", "stream")
 	// XMPP-Connection
 	_, err := fmt.Fprintf(client.conn, "<?xml version='1.0'?>\n"+
 		"<stream:stream to='%s' xmlns='%s'\n"+
@@ -38,7 +39,7 @@ func (client *Client) startStream() (*xmpp.StreamFeatures, error) {
 	if err := client.ReadDecode(f); err != nil {
 		return nil, err
 	}
-	debug := "stream start >"
+	debug := "start >"
 	if f.StartTLS != nil {
 		debug += " tls"
 	}
@@ -56,7 +57,7 @@ func (client *Client) startStream() (*xmpp.StreamFeatures, error) {
 	if f.Bind != nil {
 		debug += " bind"
 	}
-	client.Logging.Info(debug)
+	logCTX.Info(debug)
 	return f, nil
 }
 
@@ -123,10 +124,10 @@ func (client *Client) connect(password string) error {
 		client.JID.Local = bind.JID.Local
 		client.JID.Domain = bind.JID.Domain
 		client.JID.Resource = bind.JID.Resource
-		client.Logging.Infof("set jid by server bind '%s'", bind.JID.Full())
+		client.Logging.WithField("type", "bind").Infof("set jid by server bind '%s'", bind.JID.Full())
 	} else if bind.Resource != "" {
 		client.JID.Resource = bind.Resource
-		client.Logging.Infof("set resource by server bind '%s'", bind.Resource)
+		client.Logging.WithField("type", "bind").Infof("set resource by server bind '%s'", bind.Resource)
 	} else {
 		return errors.New("bind>jid is nil" + xmpp.XMLChildrenString(bind))
 	}

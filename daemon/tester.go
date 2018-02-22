@@ -42,12 +42,12 @@ var TesterCMD = &cobra.Command{
 		testerInstance.LoggingBots = configTester.LoggingBots
 		clientLogger := log.New()
 		clientLogger.SetLevel(configTester.LoggingClients)
-		testerInstance.LoggingClients = clientLogger
+		testerInstance.LoggingClients = clientLogger.WithField("log", "client")
 
 		mainClient := &client.Client{
 			JID:     configTester.Client.JID,
 			Timeout: configTester.Timeout.Duration,
-			Logging: clientLogger,
+			Logging: clientLogger.WithField("jid", configTester.Client.JID.String()),
 		}
 		err := mainClient.Connect(configTester.Client.Password)
 		if err != nil {

@@ -17,7 +17,7 @@ type Tester struct {
 	Accounts       map[string]*Account `json:"accounts"`
 	Status         map[string]*Status  `json:"-"`
 	mux            sync.Mutex
-	LoggingClients *log.Logger     `json:"-"`
+	LoggingClients *log.Entry      `json:"-"`
 	LoggingBots    log.Level       `json:"-"`
 	Admins         []*xmppbase.JID `json:"-"`
 }
@@ -30,7 +30,7 @@ func NewTester() *Tester {
 }
 
 func (t *Tester) Start(mainClient *client.Client, password string) {
-
+	mainClient.SkipError = true
 	t.mainClient = mainClient
 
 	status := NewStatus(mainClient, &Account{
@@ -39,13 +39,13 @@ func (t *Tester) Start(mainClient *client.Client, password string) {
 	})
 	status.client = mainClient
 	status.Login = true
-	status.Update(t.Timeout)
 
 	t.mux.Lock()
 	defer t.mux.Unlock()
 
 	t.Status[mainClient.JID.Bare().String()] = status
-	go t.StartBot(status)
+	go t.startBot(status)
+	status.update(t.Timeout)
 
 	for _, acc := range t.Accounts {
 		t.Connect(acc)
@@ -72,9 +72,10 @@ func (t *Tester) Connect(acc *Account) {
 		return
 	}
 	c := &client.Client{
-		Timeout: t.Timeout,
-		JID:     acc.JID,
-		Logging: t.LoggingClients,
+		Timeout:   t.Timeout,
+		JID:       acc.JID,
+		Logging:   t.LoggingClients.WithField("jid", acc.JID.String()),
+		SkipError: true,
 	}
 	err := c.Connect(acc.Password)
 	if err != nil {
@@ -85,12 +86,12 @@ func (t *Tester) Connect(acc *Account) {
 		status.client = c
 		status.account.JID = c.JID
 		status.JID = c.JID
-		status.Update(t.Timeout)
-		go t.StartBot(status)
+		go t.startBot(status)
+		status.update(t.Timeout)
 	}
 }
 
-func (t *Tester) UpdateConnectionStatus(from, to *xmppbase.JID, recvmsg string) {
+func (t *Tester) updateConnectionStatus(from, to *xmppbase.JID, recvmsg string) {
 	logCTX := log.WithFields(log.Fields{
 		"jid":      to.Full(),
 		"from":     from.Full(),

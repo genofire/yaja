@@ -1,6 +1,7 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 
 	"dev.sum7.eu/genofire/yaja/xmpp"
@@ -9,10 +10,24 @@ import (
 var DefaultChannelSize = 30
 
 func (client *Client) Start() error {
-	client.iq = make(chan *xmpp.IQClient, DefaultChannelSize)
-	client.presence = make(chan *xmpp.PresenceClient, DefaultChannelSize)
-	client.mesage = make(chan *xmpp.MessageClient, DefaultChannelSize)
-	client.reply = make(map[string]chan *xmpp.IQClient)
+	if client.msg == nil {
+		client.msg = make(chan interface{}, DefaultChannelSize)
+	}
+	if client.reply == nil {
+		client.reply = make(map[string]chan *xmpp.IQClient)
+	}
+
+	defer func() {
+		for id, ch := range client.reply {
+			delete(client.reply, id)
+			close(ch)
+		}
+		client.reply = nil
+		close(client.msg)
+		client.Logging.Info("client.Start: close")
+	}()
+
+	client.Logging.Info("client.Start: start")
 
 	for {
 
@@ -20,6 +35,7 @@ func (client *Client) Start() error {
 		if err != nil {
 			return err
 		}
+		client.Logging.Debugf("client.Start: recv msg %v", xmpp.XMLStartElementToString(element))
 
 		errMSG := &xmpp.StreamError{}
 		err = client.Decode(errMSG, element)
@@ -31,21 +47,29 @@ func (client *Client) Start() error {
 		err = client.Decode(iq, element)
 		if err == nil {
 			if iq.Ping != nil {
-				client.Logging.Debug("answer ping")
+				client.Logging.Info("client.Start: answer ping")
 				iq.Type = xmpp.IQTypeResult
 				iq.To = iq.From
 				iq.From = client.JID
 				client.Send(iq)
 			} else {
-				if client.skipError && iq.Error != nil {
-					continue
-				}
 				if ch, ok := client.reply[iq.ID]; ok {
 					delete(client.reply, iq.ID)
-					ch <- iq
+					//TODO is this usefull?
+					go func() { ch <- iq }()
 					continue
 				}
-				client.iq <- iq
+				if client.SkipError && iq.Error != nil {
+					errStr, err := errorString(iq.Error)
+					if err != nil {
+						return err
+					}
+					if errStr != "" {
+						client.Logging.WithField("to", iq.To.String()).Error(errStr)
+					}
+					continue
+				}
+				client.msg <- iq
 			}
 			continue
 		}
@@ -53,45 +77,84 @@ func (client *Client) Start() error {
 		pres := &xmpp.PresenceClient{}
 		err = client.Decode(pres, element)
 		if err == nil {
-			if client.skipError && pres.Error != nil {
+			if client.SkipError && pres.Error != nil {
+				errStr, err := errorString(pres.Error)
+				if err != nil {
+					return err
+				}
+				if errStr != "" {
+					client.Logging.WithField("to", pres.To.String()).Error(errStr)
+				}
 				continue
 			}
-			client.presence <- pres
+			client.msg <- pres
 			continue
 		}
 
 		msg := &xmpp.MessageClient{}
 		err = client.Decode(msg, element)
 		if err == nil {
-			if client.skipError && msg.Error != nil {
+			if client.SkipError && msg.Error != nil {
+				errStr, err := errorString(msg.Error)
+				if err != nil {
+					return err
+				}
+				if errStr != "" {
+					client.Logging.WithField("to", msg.To.String()).Error(errStr)
+				}
 				continue
 			}
-			client.mesage <- msg
+			client.msg <- msg
 			continue
 		}
 		client.Logging.Warnf("unsupport xml recv: %v", element)
 	}
 }
-
-func (client *Client) SendRecv(iq *xmpp.IQClient) *xmpp.IQClient {
-	if iq.ID == "" {
-		iq.ID = xmpp.CreateCookieString()
+func errorString(e *xmpp.ErrorClient) (string, error) {
+	str := fmt.Sprintf("[%s] %s", e.Type, xmpp.XMLChildrenString(e))
+	if e.Text != nil {
+		str = fmt.Sprintf("[%s] %s -> %s", e.Type, e.Text.Body, xmpp.XMLChildrenString(e))
 	}
-	ch := make(chan *xmpp.IQClient, 1)
-	client.reply[iq.ID] = ch
-	client.Send(iq)
-	defer close(ch)
-	return <-ch
+	if e.Type == xmpp.ErrorTypeAuth {
+		return "", errors.New(str)
+	}
+	if e.RemoteServerNotFound != nil {
+		return "", nil
+	}
+	return str, nil
 }
 
-func (client *Client) RecvIQ() *xmpp.IQClient {
-	return <-client.iq
+func (client *Client) SendRecv(sendIQ *xmpp.IQClient) (*xmpp.IQClient, error) {
+	if sendIQ.ID == "" {
+		sendIQ.ID = xmpp.CreateCookieString()
+	}
+	ch := make(chan *xmpp.IQClient)
+	if client.reply == nil {
+		return nil, errors.New("client.SendRecv: not init (run client.Start)")
+	}
+	if client.reply == nil {
+		client.reply = make(map[string]chan *xmpp.IQClient)
+	}
+	client.reply[sendIQ.ID] = ch
+	client.Send(sendIQ)
+	iq := <-ch
+	close(ch)
+	if iq.Error != nil {
+		_, err := errorString(iq.Error)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return iq, nil
 }
 
-func (client *Client) RecvPresence() *xmpp.PresenceClient {
-	return <-client.presence
-}
-
-func (client *Client) RecvMessage() *xmpp.MessageClient {
-	return <-client.mesage
+func (client *Client) Recv() (msg interface{}, more bool) {
+	if client == nil {
+		return nil, false
+	}
+	if client.msg == nil {
+		client.msg = make(chan interface{}, DefaultChannelSize)
+	}
+	msg, more = <-client.msg
+	return
 }

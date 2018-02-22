@@ -15,7 +15,6 @@ func (client *Client) Read() (*xml.StartElement, error) {
 		switch nextToken.(type) {
 		case xml.StartElement:
 			element := nextToken.(xml.StartElement)
-			client.Logging.Debug("recv xml: ", xmpp.XMLStartElementToString(&element))
 			return &element, nil
 		}
 	}
@@ -23,11 +22,15 @@ func (client *Client) Read() (*xml.StartElement, error) {
 func (client *Client) Decode(p interface{}, element *xml.StartElement) error {
 	err := client.in.DecodeElement(p, element)
 	if err != nil {
-		client.Logging.Debugf("decode failed xml: %s to: %v", xmpp.XMLStartElementToString(element), p)
+		return err
 	} else {
-		client.Logging.Debugf("decode xml: %s to: %v with children %s", xmpp.XMLStartElementToString(element), p, xmpp.XMLChildrenString(p))
+		if b, err := xml.Marshal(p); err == nil {
+			client.Logging.Debugf("decode %v", string(b))
+		} else {
+			client.Logging.Debugf("decode %v", p)
+		}
 	}
-	return err
+	return nil
 }
 func (client *Client) ReadDecode(p interface{}) error {
 	element, err := client.Read()
@@ -41,7 +44,7 @@ func (client *Client) ReadDecode(p interface{}) error {
 	}
 	err = client.Decode(iq, element)
 	if err == nil && iq.Ping != nil {
-		client.Logging.Info("ReadElement: auto answer ping")
+		client.Logging.Info("client.ReadElement: auto answer ping")
 		iq.Type = xmpp.IQTypeResult
 		iq.To = iq.From
 		iq.From = client.JID
@@ -56,11 +59,15 @@ func (client *Client) ReadDecode(p interface{}) error {
 func (client *Client) encode(p interface{}) error {
 	err := client.out.Encode(p)
 	if err != nil {
-		client.Logging.Debugf("encode failed %v", p)
+		return err
 	} else {
-		client.Logging.Debugf("encode %v with children %s", p, xmpp.XMLChildrenString(p))
+		if b, err := xml.Marshal(p); err == nil {
+			client.Logging.Debugf("encode %v", string(b))
+		} else {
+			client.Logging.Debugf("encode %v", p)
+		}
 	}
-	return err
+	return nil
 }
 
 func (client *Client) Send(p interface{}) error {

@@ -22,23 +22,20 @@ type Client struct {
 	out      *xml.Encoder
 	in       *xml.Decoder
 
-	Logging *log.Logger
+	Logging *log.Entry
 
 	JID *xmppbase.JID
 
-	reply map[string]chan *xmpp.IQClient
-
-	skipError bool
-	iq        chan *xmpp.IQClient
-	presence  chan *xmpp.PresenceClient
-	mesage    chan *xmpp.MessageClient
+	SkipError bool
+	msg       chan interface{}
+	reply     map[string]chan *xmpp.IQClient
 }
 
 func NewClient(jid *xmppbase.JID, password string) (*Client, error) {
 	client := &Client{
 		Protocol: "tcp",
 		JID:      jid,
-		Logging:  log.New(),
+		Logging:  log.New().WithField("jid", jid.String()),
 	}
 	return client, client.Connect(password)
 

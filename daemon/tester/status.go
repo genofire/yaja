@@ -8,6 +8,7 @@ import (
 	"dev.sum7.eu/genofire/yaja/client"
 	"dev.sum7.eu/genofire/yaja/xmpp"
 	"dev.sum7.eu/genofire/yaja/xmpp/base"
+	"dev.sum7.eu/genofire/yaja/xmpp/iq"
 )
 
 type Status struct {
@@ -22,6 +23,8 @@ type Status struct {
 	TLSVersion           string            `json:"tls_version"`
 	IPv4                 bool              `json:"ipv4"`
 	IPv6                 bool              `json:"ipv6"`
+	Software             string            `json:"software,omitempty"`
+	OS                   string            `json:"os,omitempty"`
 }
 
 func NewStatus(backupClient *client.Client, acc *Account) *Status {
@@ -47,13 +50,13 @@ func (s *Status) Disconnect(reason string) {
 			}
 		}
 	}
-	s.client.Logging.Warn(reason)
+	s.client.Logging.Warnf("status-disconnect: %s", reason)
 	s.client.Close()
 	s.Login = false
 	s.TLSVersion = ""
 }
 
-func (s *Status) Update(timeout time.Duration) {
+func (s *Status) update(timeout time.Duration) {
 	if s.client == nil || !s.Login {
 		return
 	}
@@ -61,7 +64,7 @@ func (s *Status) Update(timeout time.Duration) {
 	c := &client.Client{
 		JID:      s.account.JID.Bare(),
 		Protocol: "tcp4",
-		Logging:  s.client.Logging,
+		Logging:  s.client.Logging.WithField("status", "ipv4"),
 		Timeout:  timeout / 2,
 	}
 
@@ -72,6 +75,7 @@ func (s *Status) Update(timeout time.Duration) {
 		s.IPv4 = false
 	}
 
+	c.Logging = s.client.Logging.WithField("status", "ipv4")
 	c.JID = s.account.JID.Bare()
 	c.Protocol = "tcp6"
 
@@ -100,5 +104,33 @@ func (s *Status) Update(timeout time.Duration) {
 		}
 	} else {
 		s.TLSVersion = ""
+	}
+	iq, err := s.client.SendRecv(&xmpp.IQClient{
+		To:      &xmppbase.JID{Domain: s.JID.Domain},
+		Type:    xmpp.IQTypeGet,
+		Version: &xmppiq.Version{},
+	})
+	if err != nil {
+		s.client.Logging.Errorf("status-update: %s", err.Error())
+	} else if iq != nil {
+		if iq.Error != nil && iq.Error.ServiceUnavailable != nil {
+			s.Software = "unknown"
+			s.OS = "unknown"
+		} else if iq.Version != nil {
+			s.Software = iq.Version.Name
+			if iq.Version.Version != "" {
+				s.Software += "-" + iq.Version.Version
+			}
+			if s.Software == "" {
+				s.Software = "unknown"
+			}
+			s.OS = iq.Version.OS
+			if s.OS == "" {
+				s.OS = "unknown"
+			}
+		} else {
+			s.Software = ""
+			s.OS = ""
+		}
 	}
 }

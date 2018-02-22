@@ -13,6 +13,7 @@ import (
 )
 
 func (client *Client) auth(password string) error {
+	logCTX := client.Logging.WithField("type", "auth")
 	f, err := client.startStream()
 	if err != nil {
 		return err
@@ -22,7 +23,7 @@ func (client *Client) auth(password string) error {
 	challenge := &xmpp.SASLChallenge{}
 	response := &xmpp.SASLResponse{}
 	for _, m := range f.Mechanisms.Mechanism {
-		client.Logging.Debugf("try auth with '%s'", m)
+		logCTX.Infof("try auth with '%s'", m)
 		if m == "SCRAM-SHA-1" {
 			/*
 				mechanism = m
@@ -86,7 +87,7 @@ func (client *Client) auth(password string) error {
 	if mechanism == "" {
 		return fmt.Errorf("PLAIN authentication is not an option: %s", f.Mechanisms.Mechanism)
 	}
-	client.Logging.Infof("used auth with '%s'", mechanism)
+	logCTX.Infof("used auth with '%s'", mechanism)
 
 	element, err := client.Read()
 	if err != nil {
