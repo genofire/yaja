@@ -16,7 +16,8 @@ type IQClient struct {
 	Type    IQType        `xml:"type,attr"` // required
 	Error   *ErrorClient
 
-	Bind              *Bind                     // RFC 6120  A.7  Resource binding namespace (But in a IQ?)
+	Bind              *Bind                     // RFC 6120: A.7  Resource binding namespace (But in a IQ?)
+	Roster            *xmppiq.RosterQuery       // RFC 6121: Appendix D.
 	DiscoQueryInfo    *xmppiq.DiscoQueryInfo    // XEP-0030: XMPP Service Discovery (see iq/service_discovery.go)
 	DiscoQueryItem    *xmppiq.DiscoQueryItem    // XEP-0030: XMPP Service Discovery (see iq/service_discovery.go)
 	PrivateXMLStorage *xmppiq.PrivateXMLStorage // XEP-0049: Private XML Storage (see iq/private_xml_storage.go)

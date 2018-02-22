@@ -2,7 +2,7 @@ package xmpp
 
 import "encoding/xml"
 
-// StanzaErrorGroup implements RFC 6120  A.8  Resource binding namespace
+// StanzaErrorGroup implements RFC 6120 - A.8  Resource binding namespace
 type StanzaErrorGroup struct {
 	BadRequest            *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-stanzas bad-request"`
 	Conflict              *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-stanzas conflict"`

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Test Values for NewJID from RFC7622
+// Test Values for NewJID from RFC 7622
 // https://tools.ietf.org/html/rfc7622
 func TestNewJID(t *testing.T) {
 	assert := assert.New(t)

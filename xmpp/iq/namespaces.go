@@ -1,10 +1,10 @@
 package xmppiq
 
 const (
-	// NSDiscoInfo implements XEP 0030: Service Discovery - 11.1 disco#info
+	// NSDiscoInfo implements XEP-0030: Service Discovery - 11.1 disco#info
 	NSDiscoInfo = "http://jabber.org/protocol/disco#info"
 
-	// NSDiscoItems implements XEP 0030: Service Discovery - 11.2 disco#items
+	// NSDiscoItems implements XEP-0030: Service Discovery - 11.2 disco#items
 	NSDiscoItems = "http://jabber.org/protocol/disco#items"
 
 	// NSPrivateXMLStorage implements XEP-0049: Private XML Storage - 7

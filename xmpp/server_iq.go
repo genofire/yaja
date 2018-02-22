@@ -16,7 +16,7 @@ type IQServer struct {
 	Type    IQType        `xml:"type,attr"` // required
 	Error   *ErrorServer
 
-	Bind *Bind        // RFC 6120  A.7  Resource binding namespace (But in a IQ?)
+	Bind *Bind        // RFC 6120: A.7  Resource binding namespace (But in a IQ?)
 	Ping *xmppiq.Ping // XEP-0199: XMPP Ping (see iq/ping.go)
 
 	// Any hasn't matched element

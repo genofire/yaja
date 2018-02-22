@@ -11,7 +11,7 @@ func init() {
 	jidRegex = regexp.MustCompile(`^(?:([^@/<>'\" ]+)@)?([^@/<>'\"]+)(?:/([^<>'\" ][^<>'\"]*))?$`)
 }
 
-// JID implements RFC6122: XMPP - Address Format
+// JID implements RFC 6122: XMPP - Address Format
 type JID struct {
 	Local    string
 	Domain   string

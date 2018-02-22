@@ -9,8 +9,7 @@ type ErrorServer struct {
 	Type    ErrorType `xml:"type,attr"` // required
 	Text    *Text
 
-	// RFC 6120  A.8  Resource binding namespace
-	StanzaErrorGroup
+	StanzaErrorGroup // RFC 6120: A.8 - Resource binding namespace
 
 	// Any hasn't matched element
 	Other []XMLElement `xml:",any"`

@@ -2,7 +2,7 @@ package xmpp
 
 import "encoding/xml"
 
-// StreamErrorGroup implements RFC 6120  A.2  Stream Error Namespace
+// StreamErrorGroup implements RFC 6120 - A.2  Stream Error Namespace
 type StreamErrorGroup struct {
 	BadFormat              *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-streams bad-format"`
 	BadNamespacePrefix     *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-streams bad-namespace-prefix"`
@@ -31,7 +31,7 @@ type StreamErrorGroup struct {
 	UnsupportedVersion     *xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-streams unsupported-version"`
 }
 
-// StreamError implements RFC 6120  A.2  Stream Error Namespace
+// StreamError implements RFC 6120 - A.2  Stream Error Namespace
 type StreamError struct {
 	XMLName xml.Name `xml:"http://etherx.jabber.org/streams error"`
 	Text    *Text

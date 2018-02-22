@@ -31,8 +31,9 @@
 all implementation of all comman (RFCs and XEPs) xml element
 
 **Version**
-- [RFC 6120 (XMPP - Core)](https://xmpp.org/rfcs/rfc3920.html)
-- [XEP 0030: Service Discovery](https://xmpp.org/extensions/xep-0030.html)
+- [RFC 6120 (XMPP - Core)](https://xmpp.org/rfcs/rfc6120.html)
+- [RFC 6121 (XMPP - Instant Messaging and Presence)](https://xmpp.org/rfcs/rfc6121.html)
+- [XEP-0030: Service Discovery](https://xmpp.org/extensions/xep-0030.html)
 - [XEP-0049: Private XML Storage](https://xmpp.org/extensions/xep-0049.html)
 - [XEP-0092: Software Version](https://xmpp.org/extensions/xep-0092.html)
 - [XEP-0138: Stream Compression](https://xmpp.org/extensions/xep-0138.html)

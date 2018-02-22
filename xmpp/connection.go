@@ -10,7 +10,7 @@ import (
 type StreamFeatures struct {
 	XMLName     xml.Name `xml:"http://etherx.jabber.org/streams features"`
 	StartTLS    *TLSStartTLS
-	Mechanisms  SASLMechanisms      // RFC 6120 - A.4 SASL Namespace (see sasl.go)
+	Mechanisms  SASLMechanisms      // RFC 6120: A.4 SASL Namespace (see sasl.go)
 	Compression *CompressionFeature // XEP-0138: Stream Compression (see compression.go)
 	Bind        *Bind
 	Session     bool
@@ -32,7 +32,7 @@ type TLSFailure struct {
 	XMLName xml.Name `xml:"urn:ietf:params:xml:ns:xmpp-tls failure"`
 }
 
-// Bind implements RFC 6120  A.7  Resource binding namespace
+// Bind implements RFC 6120 - A.7  Resource binding namespace
 type Bind struct {
 	XMLName  xml.Name      `xml:"urn:ietf:params:xml:ns:xmpp-bind bind"`
 	Resource string        `xml:"resource"`
