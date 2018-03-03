@@ -1,7 +1,6 @@
 package client
 
 import (
-	"crypto/tls"
 	"encoding/xml"
 	"fmt"
 	"net"
@@ -33,16 +32,15 @@ type Client struct {
 
 func NewClient(jid *xmppbase.JID, password string) (*Client, error) {
 	client := &Client{
-		Protocol: "tcp",
-		JID:      jid,
-		Logging:  log.New().WithField("jid", jid.String()),
+		JID:     jid,
+		Logging: log.New().WithField("jid", jid.String()),
 	}
 	return client, client.Connect(password)
 
 }
 func (client *Client) Connect(password string) error {
 	_, srvEntries, err := net.LookupSRV("xmpp-client", "tcp", client.JID.Domain)
-	addr := client.JID.Domain + ":5222"
+	addr := client.JID.Domain
 	if err == nil && len(srvEntries) > 0 {
 		bestSrv := srvEntries[0]
 		for _, srv := range srvEntries {
@@ -52,18 +50,19 @@ func (client *Client) Connect(password string) error {
 			}
 		}
 	}
-	a := strings.SplitN(addr, ":", 2)
-	if len(a) == 1 {
+	if strings.LastIndex(addr, ":") <= strings.LastIndex(addr, "]") {
 		addr += ":5222"
 	}
 	if client.Protocol == "" {
 		client.Protocol = "tcp"
 	}
+	client.Logging.Debug("try tcp connect")
 	conn, err := net.DialTimeout(client.Protocol, addr, client.Timeout)
-	client.setConnection(conn)
 	if err != nil {
 		return err
 	}
+	client.Logging.Debug("tcp connected")
+	client.setConnection(conn)
 
 	if err = client.connect(password); err != nil {
 		client.Close()
@@ -74,7 +73,7 @@ func (client *Client) Connect(password string) error {
 
 // Close closes the XMPP connection
 func (c *Client) Close() error {
-	if c.conn != (*tls.Conn)(nil) {
+	if c.conn != nil {
 		return c.conn.Close()
 	}
 	return nil

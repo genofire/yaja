@@ -6,9 +6,9 @@ import (
 	"dev.sum7.eu/genofire/yaja/xmpp"
 )
 
-func (client *Client) Read() (*xml.StartElement, error) {
+func read(decoder *xml.Decoder) (*xml.StartElement, error) {
 	for {
-		nextToken, err := client.in.Token()
+		nextToken, err := decoder.Token()
 		if err != nil {
 			return nil, err
 		}
@@ -18,6 +18,9 @@ func (client *Client) Read() (*xml.StartElement, error) {
 			return &element, nil
 		}
 	}
+}
+func (client *Client) Read() (*xml.StartElement, error) {
+	return read(client.in)
 }
 func (client *Client) Decode(p interface{}, element *xml.StartElement) error {
 	err := client.in.DecodeElement(p, element)
@@ -43,7 +46,7 @@ func (client *Client) ReadDecode(p interface{}) error {
 		iq = &xmpp.IQClient{}
 	}
 	err = client.Decode(iq, element)
-	if err == nil && iq.Ping != nil {
+	if err == nil && iq.Ping != nil && iq.Type == xmpp.IQTypeGet {
 		client.Logging.Info("client.ReadElement: auto answer ping")
 		iq.Type = xmpp.IQTypeResult
 		iq.To = iq.From
@@ -56,35 +59,32 @@ func (client *Client) ReadDecode(p interface{}) error {
 	}
 	return client.Decode(p, element)
 }
-func (client *Client) encode(p interface{}) error {
-	err := client.out.Encode(p)
+func (client *Client) send(p interface{}) error {
+	b, err := xml.Marshal(p)
 	if err != nil {
+		client.Logging.Warnf("error send %v", p)
 		return err
-	} else {
-		if b, err := xml.Marshal(p); err == nil {
-			client.Logging.Debugf("encode %v", string(b))
-		} else {
-			client.Logging.Debugf("encode %v", p)
-		}
 	}
-	return nil
+	client.Logging.Debugf("send %v", string(b))
+	_, err = client.conn.Write(b)
+	return err
 }
 
 func (client *Client) Send(p interface{}) error {
 	msg, ok := p.(*xmpp.MessageClient)
 	if ok {
 		msg.From = client.JID
-		return client.encode(msg)
+		return client.send(msg)
 	}
 	iq, ok := p.(*xmpp.IQClient)
 	if ok {
 		iq.From = client.JID
-		return client.encode(iq)
+		return client.send(iq)
 	}
 	pc, ok := p.(*xmpp.PresenceClient)
 	if ok {
 		pc.From = client.JID
-		return client.encode(pc)
+		return client.send(pc)
 	}
-	return client.encode(p)
+	return client.send(p)
 }
