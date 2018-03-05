@@ -32,6 +32,56 @@ func TestRead(t *testing.T) {
 	assert.Error(err)
 }
 
+func TestDecode(t *testing.T) {
+	assert := assert.New(t)
+
+	server, clientConn := net.Pipe()
+	client := &Client{
+		Logging: log.WithField("test", "decode"),
+	}
+	client.setConnection(clientConn)
+
+	go server.Write([]byte(`<message xmlns="jabber:client" to="a@example.com"></message>`))
+
+	msg := &xmpp.MessageClient{}
+	err := client.ReadDecode(msg)
+	assert.NoError(err)
+	assert.Equal("a@example.com", msg.To.String())
+
+	go server.Write([]byte(`<iq xmlns="jabber:client"  to="a@example.com"></iq>`))
+
+	iq := &xmpp.IQClient{}
+	err = client.ReadDecode(iq)
+	assert.NoError(err)
+	assert.Equal("a@example.com", iq.To.String())
+	assert.Nil(iq.Ping)
+
+	go server.Write([]byte(`<iq xmlns="jabber:client" type="result"><ping xmlns="urn:xmpp:ping"/></iq>`))
+
+	err = client.ReadDecode(iq)
+	assert.NoError(err)
+	assert.NotNil(iq.Ping)
+
+	wgWait := &sync.WaitGroup{}
+	go server.Write([]byte(`<iq xmlns="jabber:client" type="get"><ping xmlns="urn:xmpp:ping"/></iq>`))
+	wgWait.Add(1)
+	go func() {
+		_, err := read(xml.NewDecoder(server))
+		assert.NoError(err)
+		wgWait.Done()
+	}()
+
+	err = client.ReadDecode(iq)
+	wgWait.Wait()
+	assert.NoError(err)
+
+	go server.Write([]byte(`<>`))
+
+	err = client.ReadDecode(msg)
+	assert.Error(err)
+
+}
+
 func TestSend(t *testing.T) {
 	assert := assert.New(t)
 

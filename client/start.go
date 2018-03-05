@@ -46,7 +46,7 @@ func (client *Client) Start() error {
 		iq := &xmpp.IQClient{}
 		err = client.Decode(iq, element)
 		if err == nil {
-			if iq.Ping != nil {
+			if iq.Ping != nil && iq.Type == xmpp.IQTypeGet {
 				client.Logging.Info("client.Start: answer ping")
 				iq.Type = xmpp.IQTypeResult
 				iq.To = iq.From
