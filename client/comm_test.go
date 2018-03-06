@@ -66,8 +66,8 @@ func TestDecode(t *testing.T) {
 	go server.Write([]byte(`<iq xmlns="jabber:client" type="get"><ping xmlns="urn:xmpp:ping"/></iq>`))
 	wgWait.Add(1)
 	go func() {
-		_, err := read(xml.NewDecoder(server))
-		assert.NoError(err)
+		_, inlineErr := read(xml.NewDecoder(server))
+		assert.NoError(inlineErr)
 		wgWait.Done()
 	}()
 
@@ -107,8 +107,8 @@ func TestSend(t *testing.T) {
 
 	wgWait.Add(1)
 	go func() {
-		err := client.Send(&xmpp.MessageClient{To: xmppbase.NewJID("a@a.de")})
-		assert.NoError(err)
+		inlineErr := client.Send(&xmpp.MessageClient{To: xmppbase.NewJID("a@a.de")})
+		assert.NoError(inlineErr)
 		wgWait.Done()
 	}()
 
@@ -120,8 +120,8 @@ func TestSend(t *testing.T) {
 
 	wgWait.Add(1)
 	go func() {
-		err := client.Send(&xmpp.IQClient{Type: xmpp.IQTypeGet})
-		assert.NoError(err)
+		inlineErr := client.Send(&xmpp.IQClient{Type: xmpp.IQTypeGet})
+		assert.NoError(inlineErr)
 		wgWait.Done()
 	}()
 
@@ -133,8 +133,8 @@ func TestSend(t *testing.T) {
 
 	wgWait.Add(1)
 	go func() {
-		err := client.Send(&xmpp.PresenceClient{Type: xmpp.PresenceTypeSubscribe})
-		assert.NoError(err)
+		inlineErr := client.Send(&xmpp.PresenceClient{Type: xmpp.PresenceTypeSubscribe})
+		assert.NoError(inlineErr)
 		wgWait.Done()
 	}()
 

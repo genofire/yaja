@@ -33,7 +33,7 @@ func (client *Client) startStream() (*xmpp.StreamFeatures, error) {
 		return nil, err
 	}
 	if element.Name.Space != xmpp.NSStream || element.Name.Local != "stream" {
-		return nil, errors.New("is not stream")
+		return nil, errors.New("is no stream")
 	}
 	f := &xmpp.StreamFeatures{}
 	if err := client.ReadDecode(f); err != nil {

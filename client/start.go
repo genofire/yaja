@@ -55,7 +55,7 @@ func (client *Client) Start() error {
 			} else {
 				if ch, ok := client.reply[iq.ID]; ok {
 					delete(client.reply, iq.ID)
-					//TODO is this usefull?
+					//TODO is this useful?
 					go func() { ch <- iq }()
 					continue
 				}

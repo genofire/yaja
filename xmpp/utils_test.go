@@ -19,7 +19,7 @@ func TestStartElementToString(t *testing.T) {
 			Space: "jabber:client",
 		},
 		Attr: []xml.Attr{
-			xml.Attr{
+			{
 				Name: xml.Name{
 					Local: "foo",
 				},
