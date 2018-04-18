@@ -32,6 +32,9 @@ func (t *Tester) Output() *Output {
 	}
 	links := make(map[string]*Link)
 
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
 	for from, status := range t.Status {
 		output.Status = append(output.Status, status)
 		if !status.Login {

@@ -61,7 +61,7 @@ func (t *Tester) startBot(status *Status) {
 			case xmpp.PresenceTypeUnavailable:
 				logPres.Debug("recv presence unavailable")
 			default:
-				logCTX.Warnf("recv presence unsupported: %s -> %s", pres.Type, xmpp.XMLChildrenString(pres))
+				logPres.Warnf("recv presence unsupported: %s -> %s", pres.Type, xmpp.XMLChildrenString(pres))
 			}
 		case *xmpp.MessageClient:
 			msg := element.(*xmpp.MessageClient)
