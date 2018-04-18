@@ -1,5 +1,6 @@
 # yaja (Yet Another JAbber implementation)
 
+[![DroneCI](https://ci.sum7.eu/api/badges/genofire/yaja/status.svg?branch=master)](https://ci.sum7.eu/genofire/yaja)
 [![CircleCI](https://circleci.com/gh/genofire/yaja/tree/master.svg?style=shield)](https://circleci.com/gh/genofire/yaja/tree/master)
 [![Coverage Status](https://coveralls.io/repos/github/genofire/yaja/badge.svg?branch=master)](https://coveralls.io/github/genofire/yaja?branch=master)
 [![codecov](https://codecov.io/gh/genofire/yaja/branch/master/graph/badge.svg)](https://codecov.io/gh/genofire/yaja)
@@ -13,7 +14,7 @@
 		- SASL-Auth (PLAIN, DIGEST-MD5)
 	- Read & Decode (recv xml)
 	- Send (send xml)
-	- No OTR (never implemented -> nowadays OMEMO or PGP prefered)
+	- No OTR (never implemented -> nowadays OMEMO or PGP preferred)
 	- No OMEMO support (not implemented by me: library only for bots and testing)
 - Client (planned)
 - Daemon
