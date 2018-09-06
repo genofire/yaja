@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 
 	"dev.sum7.eu/genofire/yaja/xmpp/base"
+	"dev.sum7.eu/genofire/yaja/xmpp/x/muc"
 )
 
 // PresenceClient implements RFC 6120 - A.5 Client Namespace (a part)
@@ -20,6 +21,8 @@ type PresenceClient struct {
 	Priority uint         `xml:"priority,omitempty"` // default: 0
 
 	Error *ErrorClient
+
+	MUC *xmuc.Base // XEP-0045: Multi-User Chat (see x/muc/base.go)
 
 	Delay *Delay `xml:"delay"` // which XEP ?
 
